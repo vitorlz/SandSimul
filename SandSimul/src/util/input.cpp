@@ -10,6 +10,24 @@ void Input::init(GLFWwindow* window)
 
 void Input::update()
 {
+	// keyboard input
+	static bool keyDownLastFrame[349];
+
+	for (int i = 32; i < 349; i++)
+	{
+		if (glfwGetKey(window, i) == GLFW_PRESS)
+			keyDown[i] = true;
+		else
+			keyDown[i] = false;
+
+		if (keyDown[i] && !keyDownLastFrame[i])
+			keyPressed[i] = true;
+		else
+			keyPressed[i] = false;
+
+		keyDownLastFrame[i] = keyDown[i];
+	}
+
 	// mouse input
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);

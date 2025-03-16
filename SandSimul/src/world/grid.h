@@ -6,15 +6,15 @@
 enum CellType : uint8_t
 {
 	AIR = 0,
-	SAND = 1
+	SAND = 1,
+	WATER = 2
 };
 
 struct CellData
 {
 	CellType type = AIR;
 	types::color8 color = { 255, 255, 255 };
-	uint8_t padding1 = 0;
-	uint8_t padding2 = 0;
+	bool isUpdated = false;
 };
 
 class Grid

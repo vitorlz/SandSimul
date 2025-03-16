@@ -21,5 +21,8 @@ public:
 	int mouseOffsetX;
 	int mouseOffsetY;
 
+	int keyDown[349];
+	int keyPressed[349];
+
 	GLFWwindow* window;
 };
