@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include "../util/types.h"
 
 enum CellType : uint8_t
 {
@@ -11,7 +12,7 @@ enum CellType : uint8_t
 struct CellData
 {
 	CellType type = AIR;
-	uint8_t color = 255;
+	types::color8 color = { 255, 255, 255 };
 	uint8_t padding1 = 0;
 	uint8_t padding2 = 0;
 };
@@ -19,17 +20,16 @@ struct CellData
 class Grid
 {
 public:
-	Grid(int size);
-
-	int size;
-
+	Grid();
 	CellData& get(int x, int y);
 	void set(int x, int y, CellData data);
+	std::vector<CellData>& getGrid();
+	std::vector<types::color8>& getCellTexture();
 
-	std::vector<CellData> getGrid();
+	void setCellTextureColor(int x, int y, types::color8 color);
 
+	const int size = 300;
 private:
-
-	std::vector<CellData> grid;
-
+	std::vector<CellData> cellGrid;
+	std::vector<types::color8> cellTexture;
 };

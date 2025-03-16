@@ -3,6 +3,11 @@
 #include "GLFW/glfw3.h"
 #include "iostream"
 
+void Input::init(GLFWwindow* window)
+{
+	this->window = window;
+}
+
 void Input::update()
 {
 	// mouse input
@@ -11,9 +16,27 @@ void Input::update()
 	
 	mouseOffsetX = x - mouseX;
 	mouseOffsetY = y - mouseY;
-	
+
 	mouseX = x;
 	mouseY = y;
+
+	if (mouseX > 800)
+	{
+		mouseX = 800;
+	}
+	else if (mouseX < 0)
+	{
+		mouseX = 0;
+	}
+
+	if (mouseY > 800)
+	{
+		mouseY = 800;
+	}
+	else if (mouseY < 0)
+	{
+		mouseY = 0;
+	}
 
 	isleftMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 	isrightMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;

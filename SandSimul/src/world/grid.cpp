@@ -1,22 +1,33 @@
 #include "grid.h"
 
 
-Grid::Grid(int size)
-	: size(size), grid(size* size, CellData())
+Grid::Grid()
+	: cellGrid(size* size, CellData()), cellTexture(size* size, types::color8{.r = 255, .g = 255, .b = 255})
 {
 }
 
 CellData& Grid::get(int x, int y)
 {
-	return grid[y * size + x];
+	return cellGrid[y * size + x];
 }
 
 void Grid::set(int x, int y, CellData data)
 {
-	grid[y * size + x] = data;
+	cellGrid[y * size + x] = data;
 }
 
-std::vector<CellData> Grid::getGrid()
+std::vector<CellData>& Grid::getGrid()
 {
-	return grid;
+	return cellGrid;
+}
+
+std::vector<types::color8>& Grid::getCellTexture()
+{
+	return cellTexture;
+}
+
+void Grid::setCellTextureColor(int x, int y, types::color8 color)
+{
+	cellTexture[y * size + x] = color;
+
 }

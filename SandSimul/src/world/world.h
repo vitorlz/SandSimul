@@ -1,18 +1,17 @@
 #pragma once 
-
 #include "../util/input.h"
 #include <vector>
-
 #include "grid.h"
 
 class World
 {
 public:
-	World(GLFWwindow* window);
+	void init(Input* input);
+	void updateCells();
 
-	Input input;
-
-	void updateCell();
-
+	Input* input;
 	Grid grid;
+
+private:
+	void updateSand();
 };
