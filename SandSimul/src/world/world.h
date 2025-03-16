@@ -22,6 +22,8 @@ private:
 	void createCell(int x, int y, CellType type);
 	void spawnCells();
 
+	void disperseFluid(int x, int y, int dispersion, int dirX, int dirY);
+
 	int brushSize = 5;
 	CellType brushType = SAND;
 };

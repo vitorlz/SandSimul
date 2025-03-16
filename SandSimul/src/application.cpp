@@ -30,7 +30,6 @@ void Application::run()
 
             lastTime = currentTime;
         }
-
         renderer.update();
 
         glfwSwapBuffers(window);

@@ -155,12 +155,14 @@ void World::createSand(int x, int y)
 
 void World::updateWater(int x, int y)
 {
+	int dispersion = 5;
 	CellData currentCell = grid.get(x, y);
 	if (y < grid.size - 1 && !currentCell.isUpdated)
 	{
 		CellData cellBelow = grid.get(x, y + 1);
 
 		int randomOffset = types::genRandom(-1, 1);
+
 		currentCell.isUpdated = true;
 
 		if (cellBelow.type == AIR)
@@ -181,10 +183,47 @@ void World::updateWater(int x, int y)
 			}
 			else if (cellSide.type == AIR)
 			{
-				grid.set(x, y, cellSide);
-				grid.set(x + randomOffset, y, currentCell);
+				// iterate through the cells on the side randomOffset is pointing at (-1 = left, 1 = right) until there is no air or up to 
+				// the value of dispersion.
+				disperseFluid(x, y, dispersion, randomOffset, 0);
 			}
 		}
+	}
+}
+
+void World::disperseFluid(int x, int y, int dispersion, int dirX, int dirY)
+{
+	CellData currentCell = grid.get(x, y);
+	CellData cellSide;
+
+	CellData lastAirCell;
+
+	int i = 1;
+	while (i <= dispersion && ((x + dirX * i) < grid.size) && ((x + dirX * i) >= 0))
+	{
+		cellSide = grid.get(x + dirX * i, y);
+
+		if (cellSide.type == AIR)
+		{
+			if (i == dispersion)
+			{
+				// reached maximum dispersion: swap.
+				grid.set(x, y, cellSide);
+				grid.set(x + dirX * i, y, currentCell);
+
+				break;
+			}
+		}
+		else 
+		{
+			// found non-air cell: swap with last air cell.
+			grid.set(x, y, grid.get(x + dirX * i - dirX, y));
+			grid.set(x + dirX * i - dirX, y, currentCell);
+			
+			break;
+		}
+
+		i++;
 	}
 }
 
