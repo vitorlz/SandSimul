@@ -2,6 +2,7 @@
 #include "iostream"
 #include "random"
 #include <GLFW/glfw3.h>
+#include "glm/glm.hpp"
 
 void World::init(Input* input)
 {
@@ -12,11 +13,19 @@ void World::updateCells()
 {
 	if (input->keyPressed[GLFW_KEY_1])
 	{
-		brushType = SAND;
+		brush = { SAND, SOLID_MOVABLE };
 	}
 	else if (input->keyPressed[GLFW_KEY_2])
 	{
-		brushType = WATER;
+		brush = { WATER, FLUID };
+	}
+	else if (input->keyPressed[GLFW_KEY_3])
+	{
+		brush = { WOOD, SOLID_IMMOVABLE };
+	}
+	else if (input->keyPressed[GLFW_KEY_BACKSPACE])
+	{
+		brush = { AIR, FLUID };
 	}
 
 	if (input->isleftMouseDown)
@@ -35,6 +44,9 @@ void World::updateCells()
 				break;
 			case WATER:
 				updateWater(i, j);
+				break;
+			case WOOD:
+				updateWood(i, j);
 				break;
 			}
 		}
@@ -85,11 +97,17 @@ void World::createCell(int x, int y, CellType type)
 {
 	switch (type)
 	{
+	case AIR:
+		createAir(x, y);
+		break;
 	case SAND:
 		createSand(x, y);
 		break;
 	case WATER:
 		createWater(x, y);
+		break;
+	case WOOD:
+		createWood(x, y);
 		break;
 	}
 }
@@ -116,7 +134,7 @@ void World::spawnCells()
 				float radiusSquared = brushSize * brushSize;
 
 				// randomize cell position in circle
-				if ((int)distanceSquared % (rand() % 3 + 1) == 0)
+				if ((int)distanceSquared % (rand() % 3 + 1) == 0 && brush.kind != SOLID_IMMOVABLE && brush.type != AIR)
 					continue;
 				
 				if (distanceSquared <= radiusSquared + brushSize * 0.5f) {
@@ -125,9 +143,9 @@ void World::spawnCells()
 
 					if (gridX >= 0 && gridX < grid.size && gridY >= 0 && gridY < grid.size) {
 
-						if (grid.get(gridX, gridY).type == AIR)
+						if (grid.get(gridX, gridY).type == AIR || brush.type == AIR)
 						{
-							createCell(gridX, gridY, brushType);
+							createCell(gridX, gridY, brush.type);
 						}
 					}
 				}
@@ -143,6 +161,7 @@ void World::createSand(int x, int y)
 	CellData sand =
 	{
 		SAND,
+		SOLID_MOVABLE,
 		types::color8{.r = 247, .g = 235, .b = 178 },
 		false
 	};
@@ -177,14 +196,13 @@ void World::updateWater(int x, int y)
 			CellData cellSide = grid.get(x + randomOffset, y);
 
 			if (cellDiagonal.type == AIR)
-			{
-				grid.set(x, y, cellDiagonal);
-				grid.set(x + randomOffset, y + 1, currentCell);
+			{	
+				// disperse diagonally 
+				disperseFluid(x, y, dispersion, randomOffset, 1);
 			}
 			else if (cellSide.type == AIR)
 			{
-				// iterate through the cells on the side randomOffset is pointing at (-1 = left, 1 = right) until there is no air or up to 
-				// the value of dispersion.
+				// disperse to the sides
 				disperseFluid(x, y, dispersion, randomOffset, 0);
 			}
 		}
@@ -193,23 +211,30 @@ void World::updateWater(int x, int y)
 
 void World::disperseFluid(int x, int y, int dispersion, int dirX, int dirY)
 {
+	// iterate through the cells in the direction defined by dirX and dirY until there is no air or up to 
+	// the value of dispersion, then swap with the last air cell found
 	CellData currentCell = grid.get(x, y);
 	CellData cellSide;
 
-	CellData lastAirCell;
-
+	glm::vec2 lastAirCellPos{};
 	int i = 1;
-	while (i <= dispersion && ((x + dirX * i) < grid.size) && ((x + dirX * i) >= 0))
+	while (i <= dispersion)
 	{
-		cellSide = grid.get(x + dirX * i, y);
+		int xOffset = dirX * i;
+		int yOffset = dirY * i;
+
+		cellSide = grid.get(x + xOffset, y + yOffset);
 
 		if (cellSide.type == AIR)
 		{
-			if (i == dispersion)
-			{
-				// reached maximum dispersion: swap.
+			lastAirCellPos = glm::vec2(x + xOffset, y + yOffset);
+
+			// if did not find non-air cells and reached max dispersion or end of the map, swap.
+			if (i == dispersion || x + xOffset == grid.size - 1 || x + xOffset == 0 
+				|| y + yOffset == grid.size - 1 || y + yOffset == 0)
+			{	
 				grid.set(x, y, cellSide);
-				grid.set(x + dirX * i, y, currentCell);
+				grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
 
 				break;
 			}
@@ -217,12 +242,11 @@ void World::disperseFluid(int x, int y, int dispersion, int dirX, int dirY)
 		else 
 		{
 			// found non-air cell: swap with last air cell.
-			grid.set(x, y, grid.get(x + dirX * i - dirX, y));
-			grid.set(x + dirX * i - dirX, y, currentCell);
-			
+			grid.set(x, y, grid.get(lastAirCellPos.x, lastAirCellPos.y));
+			grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
+
 			break;
 		}
-
 		i++;
 	}
 }
@@ -232,6 +256,7 @@ void World::createWater(int x, int y)
 	CellData water =
 	{
 		WATER,
+		FLUID,
 		types::color8{ 43, 153, 235 },
 		false
 	};
@@ -242,4 +267,37 @@ void World::createWater(int x, int y)
 	grid.set(x, y, water);
 }
 
+
+void World::updateWood(int x, int y)
+{
+}
+
+void World::createWood(int x, int y)
+{
+	CellData wood =
+	{
+		WOOD,
+		SOLID_IMMOVABLE,
+		types::color8{ 36, 17, 5 },
+		false
+	};
+
+	float f = types::genRandom(240, 255) / 255.0f;
+
+	wood.color = wood.color * f;
+	grid.set(x, y, wood);
+}
+
+void World::createAir(int x, int y)
+{
+	CellData air =
+	{
+		AIR,
+		FLUID,
+		types::color8{ 255, 255, 255 },
+		false
+	};
+
+	grid.set(x, y, air);
+}
 

@@ -19,11 +19,23 @@ private:
 	void updateWater(int x, int y);
 	void createWater(int x, int y);
 
+
+	void updateWood(int x, int y);
+	void createWood(int x, int y);
+
+	void createAir(int x, int y);
+
 	void createCell(int x, int y, CellType type);
 	void spawnCells();
 
 	void disperseFluid(int x, int y, int dispersion, int dirX, int dirY);
 
 	int brushSize = 5;
-	CellType brushType = SAND;
+
+	struct Brush
+	{
+		CellType type = SAND;
+		CellKind kind = SOLID_MOVABLE;
+	} brush;
+	
 };

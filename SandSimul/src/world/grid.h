@@ -6,13 +6,22 @@
 enum CellType : uint8_t
 {
 	AIR = 0,
-	SAND = 1,
-	WATER = 2
+	SAND,
+	WATER,
+	WOOD, 
+};
+
+enum CellKind : uint8_t
+{
+	FLUID = 0,
+	SOLID_IMMOVABLE,
+	SOLID_MOVABLE
 };
 
 struct CellData
 {
 	CellType type = AIR;
+	CellKind kind = FLUID;
 	types::color8 color = { 255, 255, 255 };
 	bool isUpdated = false;
 };
