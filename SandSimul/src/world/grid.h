@@ -9,13 +9,15 @@ enum CellType : uint8_t
 	SAND,
 	WATER,
 	WOOD, 
+	FIRE
 };
 
 enum CellKind : uint8_t
 {
 	FLUID = 0,
 	SOLID_IMMOVABLE,
-	SOLID_MOVABLE
+	SOLID_MOVABLE,
+	REACTION
 };
 
 struct CellData
@@ -23,6 +25,8 @@ struct CellData
 	CellType type = AIR;
 	CellKind kind = FLUID;
 	types::color8 color = { 255, 255, 255 };
+	bool isFlammable = false;
+	bool isIgnited = false;
 	bool isUpdated = false;
 };
 
@@ -36,6 +40,8 @@ public:
 	std::vector<types::color8>& getCellTexture();
 
 	void setCellTextureColor(int x, int y, types::color8 color);
+
+	bool isOutOfBounds(int x, int y);
 
 	const int size = 300;
 private:

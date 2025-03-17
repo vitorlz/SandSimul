@@ -31,3 +31,8 @@ void Grid::setCellTextureColor(int x, int y, types::color8 color)
 	cellTexture[y * size + x] = color;
 
 }
+
+bool Grid::isOutOfBounds(int x, int y)
+{
+	return !(x < size && x >= 0 && y < size && y >= 0);
+}

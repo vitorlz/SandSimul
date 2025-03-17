@@ -23,6 +23,9 @@ private:
 	void updateWood(int x, int y);
 	void createWood(int x, int y);
 
+	void updateFire(int x, int y);
+	void createFire(int x, int y);
+
 	void createAir(int x, int y);
 
 	void createCell(int x, int y, CellType type);
