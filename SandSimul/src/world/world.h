@@ -32,10 +32,15 @@ private:
 
 	int brushSize = 5;
 
+	void brushDraw(int centerX, int centerY);
+
 	struct Brush
 	{
 		CellType type = SAND;
 		CellKind kind = SOLID_MOVABLE;
+		bool continuous = false;
 	} brush;
+
+	bool mouseDownLastFrame = false;
 	
 };

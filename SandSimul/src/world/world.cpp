@@ -13,24 +13,29 @@ void World::updateCells()
 {
 	if (input->keyPressed[GLFW_KEY_1])
 	{
-		brush = { SAND, SOLID_MOVABLE };
+		brush = { SAND, SOLID_MOVABLE, false };
 	}
 	else if (input->keyPressed[GLFW_KEY_2])
 	{
-		brush = { WATER, FLUID };
+		brush = { WATER, FLUID, false };
 	}
 	else if (input->keyPressed[GLFW_KEY_3])
 	{
-		brush = { WOOD, SOLID_IMMOVABLE };
+		brush = { WOOD, SOLID_IMMOVABLE, true };
 	}
 	else if (input->keyPressed[GLFW_KEY_BACKSPACE])
 	{
-		brush = { AIR, FLUID };
+		brush = { AIR, FLUID, true };
 	}
 
 	if (input->isleftMouseDown)
 	{
 		spawnCells();
+		mouseDownLastFrame = true;
+	}
+	else 
+	{
+		mouseDownLastFrame = false;
 	}
 
 	for (int i = grid.size - 1; i >= 0; i--)
@@ -120,6 +125,9 @@ void World::spawnCells()
 	double currentTime = glfwGetTime();
 	double deltaTime = currentTime - lastTime;
 
+	static int lastCircleCenterX;
+	static int lastCircleCenterY;
+
 	if (deltaTime >= limit)
 	{
 		int mouseX = input->mouseX;
@@ -128,31 +136,69 @@ void World::spawnCells()
 		float relativeX = input->mouseX / 800.0;
 		float relativeY = input->mouseY / 800.0;
 
-		for (int i = -brushSize; i <= brushSize; i++) {
-			for (int j = -brushSize; j <= brushSize; j++) {
-				float distanceSquared = i * i + j * j;
-				float radiusSquared = brushSize * brushSize;
+		int centerX = (int)(relativeX * grid.size);
+		int centerY = (int)(relativeY * grid.size);
 
-				// randomize cell position in circle
-				if ((int)distanceSquared % (rand() % 3 + 1) == 0 && brush.kind != SOLID_IMMOVABLE && brush.type != AIR)
-					continue;
-				
-				if (distanceSquared <= radiusSquared + brushSize * 0.5f) {
-					int gridX = (int)(relativeX * grid.size) + i;
-					int gridY = (int)(relativeY * grid.size) + j;
+		brushDraw(centerX, centerY);
 
-					if (gridX >= 0 && gridX < grid.size && gridY >= 0 && gridY < grid.size) {
+		if (mouseDownLastFrame && brush.continuous)
+		{
+			int distX = lastCircleCenterX - centerX;
+			int distY = lastCircleCenterY - centerY;
 
-						if (grid.get(gridX, gridY).type == AIR || brush.type == AIR)
-						{
-							createCell(gridX, gridY, brush.type);
-						}
+			float m = 0;
+
+			if (distX != 0)
+			{
+				m = (float)distY / (float)distX;
+			}			
+
+			if (distX == 0)
+			{
+				for (int i = 1; i <= std::abs(distY); i++)
+				{
+					int y = distY < 0 ? -i : i;
+
+					brushDraw(centerX, centerY + y);
+				}
+			}
+			else
+			{
+				int distance = distX;
+				bool usingYDistance = false;
+				if (std::abs(distX) < std::abs(distY))
+				{
+					distance = distY;
+					usingYDistance = true;
+				}
+
+				for (int i = 1; i <= std::abs(distance); i++)
+				{
+					
+					int x;
+					int y;
+
+					if (usingYDistance)
+					{
+						y = distY < 0 ? -i : i;
+						x = std::round(float(y) / m);
+						
 					}
+					else
+					{
+						x = distX < 0 ? -i : i;
+						y = std::round(m * (float)x);
+					}
+
+					brushDraw(centerX + x,centerY + y);
 				}
 			}
 		}
 
 		lastTime = currentTime;
+
+		lastCircleCenterX = centerX;
+		lastCircleCenterY = centerY;
 	}
 }
 
@@ -251,6 +297,34 @@ void World::disperseFluid(int x, int y, int dispersion, int dirX, int dirY)
 	}
 }
 
+void World::brushDraw(int centerX, int centerY)
+{
+	for (int i = -brushSize; i <= brushSize; i++) {
+		for (int j = -brushSize; j <= brushSize; j++) {
+			float distanceSquared = i * i + j * j;
+			float radiusSquared = brushSize * brushSize;
+
+			// randomize cell position in circle
+			if ((int)distanceSquared % (rand() % 3 + 1) == 0 && brush.kind != SOLID_IMMOVABLE && brush.type != AIR)
+				continue;
+
+			if (distanceSquared <= radiusSquared + brushSize * 0.5f) {
+				int gridX = centerX + i;
+				int gridY = centerY + j;
+
+				if (gridX >= 0 && gridX < grid.size && gridY >= 0 && gridY < grid.size) {
+
+					if (grid.get(gridX, gridY).type == AIR || brush.type == AIR)
+					{
+						createCell(gridX, gridY, brush.type);
+					}
+				}
+			}
+		}
+	}
+
+}
+
 void World::createWater(int x, int y)
 {
 	CellData water =
@@ -278,11 +352,11 @@ void World::createWood(int x, int y)
 	{
 		WOOD,
 		SOLID_IMMOVABLE,
-		types::color8{ 36, 17, 5 },
+		types::color8{ 51, 27, 12 },
 		false
 	};
 
-	float f = types::genRandom(240, 255) / 255.0f;
+	float f = types::genRandom(200, 255) / 255.0f;
 
 	wood.color = wood.color * f;
 	grid.set(x, y, wood);
