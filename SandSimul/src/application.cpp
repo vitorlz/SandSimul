@@ -25,15 +25,17 @@ void Application::run()
 
         if (deltaTime >= limit)
         {
+            glfwPollEvents();
+
             input.update();
             world.updateCells();
 
+            renderer.update();
             lastTime = currentTime;
         }
-        renderer.update();
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        
     }
 
     cleanup();

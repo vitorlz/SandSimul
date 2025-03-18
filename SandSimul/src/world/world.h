@@ -2,6 +2,7 @@
 #include "../util/input.h"
 #include <vector>
 #include "grid.h"
+#include "../util/types.h"
 
 class World
 {
@@ -26,12 +27,16 @@ private:
 	void updateFire(int x, int y);
 	void createFire(int x, int y);
 
+	void updateStone(int x, int y);
+	void createStone(int x, int y);
+
 	void createAir(int x, int y);
 
 	void createCell(int x, int y, CellType type);
 	void spawnCells();
 
-	void disperseFluid(int x, int y, int dispersion, int dirX, int dirY);
+	// returns last air cell found in the direction specified.
+	types::Pos disperse(int x, int y, int dispersion, int dirX, int dirY, bool stopAtNonEmpty = true);
 
 	int brushSize = 5;
 
@@ -41,9 +46,10 @@ private:
 	{
 		CellType type = SAND;
 		CellKind kind = SOLID_MOVABLE;
+		float spawnRate = 40.0f;
+		int sparsity = 3;
 		bool continuous = false;
 	} brush;
 
 	bool mouseDownLastFrame = false;
-	
 };

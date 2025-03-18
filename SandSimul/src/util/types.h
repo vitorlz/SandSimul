@@ -11,6 +11,12 @@ namespace types
 		uint8_t r = 0, g = 0, b = 0;
 	};
 
+	struct Pos
+	{
+		int x = 0;
+		int y = 0;
+	};
+
 	inline color8 operator*(const color8& c, float s)
 	{
 		color8 color;

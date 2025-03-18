@@ -9,7 +9,8 @@ enum CellType : uint8_t
 	SAND,
 	WATER,
 	WOOD, 
-	FIRE
+	FIRE,
+	STONE,
 };
 
 enum CellKind : uint8_t
@@ -25,8 +26,7 @@ struct CellData
 	CellType type = AIR;
 	CellKind kind = FLUID;
 	types::color8 color = { 255, 255, 255 };
-	bool isFlammable = false;
-	bool isIgnited = false;
+	uint8_t flammability = 0;
 	bool isUpdated = false;
 };
 
