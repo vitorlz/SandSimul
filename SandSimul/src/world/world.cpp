@@ -642,13 +642,12 @@ void World::updateSmoke(int x, int y)
 	float f = types::genRandom(100, 255) / 255.0f;
 	grid.get(x, y).color = types::color8{ 70, 70, 70 } * f;
 	
-	if (y > 0 && y < grid.size - 1)
+	if (y > 0)
 	{
 		int randomOffset = types::genRandom(-1, 1);
 		currentCell.isUpdated = true;
 		
 		CellData cellAbove = grid.get(x, y - 1);
-		CellData cellBelow = grid.get(x, y + 1);
 	
 		if ((cellAbove.kind == FLUID || cellAbove.kind == GAS) && types::genRandom(0, 20) == 0)
 		{
@@ -671,9 +670,17 @@ void World::updateSmoke(int x, int y)
 				grid.set(x, y, cellSide);
 				grid.set(x + randomOffset, y, currentCell);
 			}
-			else if (types::genRandom(0, 1000) == 0 && cellBelow.kind != GAS)
+			else if (types::genRandom(0, 1000) == 0)
 			{
-				createAir(x, y);
+				if (y < grid.size - 1)
+				{
+					CellData cellBelow = grid.get(x, y + 1);
+
+					if (cellBelow.kind != GAS)
+					{
+						createAir(x, y);
+					}
+				}
 			}
 		}
 	}
@@ -707,16 +714,14 @@ void World::updateSteam(int x, int y)
 	float f = types::genRandom(100, 255) / 255.0f;
 	grid.get(x, y).color = types::color8{ 120, 120, 120 } *f;
 
-	if (y > 0 && y < grid.size - 1)
+	if (y > 0)
 	{
 		int randomOffset = types::genRandom(-1, 1);
 		currentCell.isUpdated = true;
 
 		// this is going out of bounds
 		CellData cellAbove = grid.get(x, y - 1);
-		CellData cellBelow = grid.get(x, y + 1);
 		
-
 		if ((cellAbove.kind == FLUID || cellAbove.kind == GAS) && types::genRandom(0, 20) == 0)
 		{
 			grid.set(x, y, cellAbove);
@@ -738,9 +743,17 @@ void World::updateSteam(int x, int y)
 				grid.set(x, y, cellSide);
 				grid.set(x + randomOffset, y, currentCell);
 			}
-			else if (types::genRandom(0, 10000) == 0 && cellBelow.kind != GAS && cellAbove.kind == GAS)
+			else if (types::genRandom(0, 10000) == 0)
 			{
-				createWater(x, y);
+				if (y < grid.size - 1)
+				{
+					CellData cellBelow = grid.get(x, y + 1);
+
+					if (cellBelow.kind != GAS && cellAbove.kind == GAS)
+					{
+						createWater(x, y);
+					}
+				}
 			}
 		}
 	}
