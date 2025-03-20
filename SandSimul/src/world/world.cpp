@@ -82,7 +82,12 @@ void World::updateCells()
 		for (int j = grid.size - 1; j >= 0; j--)
 		{
 			CellData& cell = grid.get(i, j);
-			cell.isUpdated = false;
+			cell.isUpdated = false;\
+			
+			// we can write different simulations here and just also update the texture that is rendered to the screen.
+			// Like, we can have a separate particle simulation that tracks the cells' velocity and gravity. 
+			// take a cell --> put it in particle simulation with velocity and gravity and make it fly into the air --> once it hits something
+			// take it back to the sand simulation.
 			
 			grid.setCellTextureColor(i, j, cell.color);
 		}
@@ -294,7 +299,7 @@ types::Pos World::disperse(int x, int y, int dispersion, int dirX, int dirY, boo
 	// iterate through the cells in the direction defined by dirX and dirY until there is no air or up to 
 	// the value of dispersion, then swap with the last air cell found
 	//CellData currentCell = grid.get(x, y);
-	CellData cellSide;
+	CellData cell;
 
 	if(dirX > 0)
 		dirX = dirX / abs(dirX);
@@ -316,9 +321,9 @@ types::Pos World::disperse(int x, int y, int dispersion, int dirX, int dirY, boo
 		int xOffset = dirX * i;
 		int yOffset = dirY * i;
 
-		cellSide = grid.get(x + xOffset, y + yOffset);
+		cell = grid.get(x + xOffset, y + yOffset);
 
-		if (cellSide.type == AIR)
+		if (cell.type == AIR)
 		{
 			lastAirCellPos = types::Pos{ x + xOffset, y + yOffset };
 
@@ -420,7 +425,7 @@ void World::updateFire(int x, int y)
 
 	int dispersion = 1;
 	int randomOffsetSides = types::genRandom(-1, 1);
-	int randomOffsetUp = types::genRandom(-types::genRandom(0, 1), 1);
+	int randomOffsetUp = 1;
 
 	CellData cellAbove = grid.get(x, y - randomOffsetUp);
 
@@ -452,7 +457,7 @@ void World::updateFire(int x, int y)
 					if (types::genRandom(destructionProb, 5000) == destructionProb)
 					{	
 						float f = types::genRandom(150, 255) / 255.0f;
-						currentCell.color = types::color8{ 237, 76, 7 } * f;
+						currentCell.color = types::color8{ 255, 86, 0 } * f;
 
 						grid.set(x + i, y + j, currentCell);
 					}
@@ -471,52 +476,64 @@ void World::updateFire(int x, int y)
 				else if (cell.type == WATER)
 				{
 					createAir(x, y);
-
 					return;
 				}
 			}
 		}
 	}
 
-	if (flammableNeighbor)
-		return;
-	else if (!isAirNeighbor)
-	{
-		createAir(x, y);
-		return;
-	}
-	else if (types::genRandom(0, 30) == 0)
+	if ((!isAirNeighbor && !flammableNeighbor))
 	{
 		createAir(x, y);
 		return;
 	}
 		
-	if ((cellAbove.type == AIR) && !grid.isOutOfBounds(x, y - randomOffsetUp))
+	if ((cellAbove.type == AIR) && types::genRandom(0, 20) == 0)
 	{
-		createAir(x, y);
-		grid.set(x, y - randomOffsetUp, currentCell);
+		if (types::genRandom(0, 4) == 0)
+		{
+			grid.set(x, y - randomOffsetUp, currentCell);
+
+		}
+		else if (!flammableNeighbor)
+		{
+			createAir(x, y);
+		}
 	}
 	else if (!grid.isOutOfBounds(x + randomOffsetSides, y - 1))
 	{
 		CellData cellDiagonal = grid.get(x + randomOffsetSides, y - 1);
 		CellData cellSide = grid.get(x + randomOffsetSides, y);
 
-		if (cellDiagonal.type == AIR)
+		if (cellDiagonal.type == AIR && types::genRandom(0, 2) == 0)
 		{
 			// disperse diagonally
 			types::Pos lastAirCellPos = disperse(x, y, dispersion, randomOffsetSides, -1);
 
-			createAir(x, y);
-			grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
+			if (types::genRandom(0, 1) == 0 && !flammableNeighbor)
+			{
+				createAir(x, y);
+			}
+			else
+			{
+				grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
+			}
 
 		}
-		else if (cellSide.type == AIR)
+		else if (cellSide.type == AIR && types::genRandom(0, 4) == 0)
 		{
 			// disperse to the sides
 			types::Pos lastAirCellPos = disperse(x, y, dispersion, randomOffsetSides, 0);
 
-			createAir(x, y);
-			grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
+			if (types::genRandom(0, 1) == 0 || ((cellDiagonal.type != AIR && cellAbove.type != AIR && cellDiagonal.type != FIRE && cellAbove.type != FIRE)))
+			{
+				if(!flammableNeighbor)
+					createAir(x, y);
+			}
+			else
+			{
+				grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
+			}
 
 		}
 	}
@@ -528,7 +545,7 @@ void World::createFire(int x, int y)
 	{
 		.type = FIRE,
 		.kind = REACTION,
-		.color = types::color8{ 237, 76, 7 },
+		.color = types::color8{ 255, 86, 0 },
 		.flammability = 0,
 		.isUpdated = false
 	};
@@ -538,7 +555,6 @@ void World::createFire(int x, int y)
 	fire.color = fire.color * f;
 	grid.set(x, y, fire);
 }
-
 
 void World::createStone(int x, int y)
 {
