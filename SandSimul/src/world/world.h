@@ -30,6 +30,15 @@ private:
 	void updateStone(int x, int y);
 	void createStone(int x, int y);
 
+	void updateGunpowder(int x, int y);
+	void createGunpowder(int x, int y);
+
+	void updateSmoke(int x, int y);
+	void createSmoke(int x, int y);
+
+	void updateSteam(int x, int y);
+	void createSteam(int x, int y);
+
 	void createAir(int x, int y);
 
 	void createCell(int x, int y, CellType type);

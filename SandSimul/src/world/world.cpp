@@ -36,6 +36,19 @@ void World::updateCells()
 	{
 		brush = { STONE, SOLID_IMMOVABLE, 60.0f, 0, true };
 	}
+	else if (input->keyPressed[GLFW_KEY_6])
+	{
+		brush = { GUNPOWDER, SOLID_MOVABLE, 40.0f, 3, false };
+	}
+	else if (input->keyPressed[GLFW_KEY_7])
+	{
+		brush = { SMOKE, GAS, 40.0f, 3, false };
+	}
+	else if (input->keyPressed[GLFW_KEY_8])
+	{
+		brush = { STEAM, GAS, 40.0f, 3, false };
+	}
+
 
 	if (input->isleftMouseDown)
 	{
@@ -71,6 +84,15 @@ void World::updateCells()
 			case STONE:
 				updateStone(i, j);
 				break;
+			case GUNPOWDER:
+				updateGunpowder(i, j);
+				break;
+			case SMOKE:
+				updateSmoke(i, j);
+				break;
+			case STEAM:
+				updateSteam(i, j);
+				break;
 			}
 
 			grid.get(i, j).isUpdated = true;
@@ -97,7 +119,7 @@ void World::updateCells()
 void World::updateSand(int x, int y)
 {
 	CellData currentCell = grid.get(x, y);
-	if (y < grid.size - 1 && !currentCell.isUpdated)
+	if (y < grid.size - 1)
 	{
 		CellData cellBelow = grid.get(x, y + 1);
 
@@ -144,6 +166,16 @@ void World::createCell(int x, int y, CellType type)
 		break;
 	case STONE:
 		createStone(x, y);
+		break;
+	case GUNPOWDER:
+		createGunpowder(x, y);
+		break;
+	case SMOKE:
+		createSmoke(x, y);
+		break;
+	case STEAM:
+		createSteam(x, y);
+		break;
 	}
 }
 
@@ -241,11 +273,11 @@ void World::createSand(int x, int y)
 {
 	CellData sand =
 	{
-		SAND,
-		SOLID_MOVABLE,
-		types::color8{.r = 247, .g = 235, .b = 178 },
-		false,
-		false
+		.type = SAND,
+		.kind = SOLID_MOVABLE,
+		.color = types::color8{.r = 247, .g = 235, .b = 178 },
+		.flammability = 0,
+		.isUpdated = false
 	};
 
 	float f = types::genRandom(200, 255) / 255.0f;
@@ -266,14 +298,14 @@ void World::updateWater(int x, int y)
 		CellData cellDiagonal = grid.get(x + randomOffset, y + 1);
 		CellData cellSide = grid.get(x + randomOffset, y);
 
-		if (cellBelow.type == AIR)
+		if (cellBelow.type == AIR || cellBelow.kind == GAS)
 		{
 			grid.set(x, y, cellBelow);
 			grid.set(x, y + 1, currentCell);
 		}
 		else if (x + randomOffset < grid.size && x + randomOffset >= 0)
 		{
-			if (cellDiagonal.type == AIR)
+			if (cellDiagonal.type == AIR || cellDiagonal.kind == GAS)
 			{
 				// disperse diagonally 
 				types::Pos lastAirCellPos = disperse(x, y, dispersion, randomOffset, 1);
@@ -281,7 +313,7 @@ void World::updateWater(int x, int y)
 				createAir(x, y);
 				grid.set(lastAirCellPos.x, lastAirCellPos.y, currentCell);
 			}
-			else if (cellSide.type == AIR)
+			else if (cellSide.type == AIR || cellSide.kind == GAS)
 			{
 				// disperse to the sides
 				types::Pos lastAirCellPos = disperse(x, y, dispersion, randomOffset, 0);
@@ -323,7 +355,7 @@ types::Pos World::disperse(int x, int y, int dispersion, int dirX, int dirY, boo
 
 		cell = grid.get(x + xOffset, y + yOffset);
 
-		if (cell.type == AIR)
+		if (cell.type == AIR || cell.kind == GAS)
 		{
 			lastAirCellPos = types::Pos{ x + xOffset, y + yOffset };
 
@@ -404,6 +436,7 @@ void World::createWood(int x, int y)
 		.kind = SOLID_IMMOVABLE,
 		.color = types::color8{ 99, 62, 41 },
 		.flammability = 130,
+		.combustsInto = SMOKE,
 		.isUpdated = false
 	};
 
@@ -460,6 +493,9 @@ void World::updateFire(int x, int y)
 						currentCell.color = types::color8{ 255, 86, 0 } * f;
 
 						grid.set(x + i, y + j, currentCell);
+
+						if(types::genRandom(0, 1) == 0)
+							createCell(x, y, cell.combustsInto);
 					}
 
 					int emberProb = std::round((float)cell.flammability / 255.0f * 400);
@@ -475,6 +511,10 @@ void World::updateFire(int x, int y)
 				}
 				else if (cell.type == WATER)
 				{
+					if(types::genRandom(0, 10) == 0)
+					{
+						createSteam(x + i, y + j);
+					}
 					createAir(x, y);
 					return;
 				}
@@ -488,7 +528,7 @@ void World::updateFire(int x, int y)
 		return;
 	}
 		
-	if ((cellAbove.type == AIR) && types::genRandom(0, 20) == 0)
+	if (cellAbove.type == AIR && types::genRandom(0, 20) == 0)
 	{
 		if (types::genRandom(0, 4) == 0)
 		{
@@ -520,12 +560,12 @@ void World::updateFire(int x, int y)
 			}
 
 		}
-		else if (cellSide.type == AIR && types::genRandom(0, 4) == 0)
+		else if (cellSide.type == AIR && types::genRandom(0, 4) == 0 || ((cellDiagonal.type != AIR && cellAbove.type != AIR && cellDiagonal.type != FIRE && cellAbove.type != FIRE)))
 		{
 			// disperse to the sides
 			types::Pos lastAirCellPos = disperse(x, y, dispersion, randomOffsetSides, 0);
 
-			if (types::genRandom(0, 1) == 0 || ((cellDiagonal.type != AIR && cellAbove.type != AIR && cellDiagonal.type != FIRE && cellAbove.type != FIRE)))
+			if (types::genRandom(0, 1) == 0)
 			{
 				if(!flammableNeighbor)
 					createAir(x, y);
@@ -572,6 +612,161 @@ void World::createStone(int x, int y)
 	stone.color = stone.color * f;
 	grid.set(x, y, stone);
 }
+
+void World::updateGunpowder(int x, int y)
+{
+	updateSand(x, y);
+}
+
+void World::createGunpowder(int x, int y)
+{
+	CellData gunpowder =
+	{
+		.type = GUNPOWDER,
+		.kind = SOLID_MOVABLE,
+		.color = types::color8{ 70, 70, 70 },
+		.flammability = 254,
+		.combustsInto = SMOKE,
+		.isUpdated = false
+	};
+
+	float f = types::genRandom(150, 255) / 255.0f;
+
+	gunpowder.color = gunpowder.color * f;
+	grid.set(x, y, gunpowder);
+}
+
+void World::updateSmoke(int x, int y)
+{
+	CellData currentCell = grid.get(x, y);
+	float f = types::genRandom(100, 255) / 255.0f;
+	grid.get(x, y).color = types::color8{ 70, 70, 70 } * f;
+	
+	if (y > 0 && y < grid.size - 1)
+	{
+		int randomOffset = types::genRandom(-1, 1);
+		currentCell.isUpdated = true;
+		
+		CellData cellAbove = grid.get(x, y - 1);
+		CellData cellBelow = grid.get(x, y + 1);
+	
+		if ((cellAbove.kind == FLUID || cellAbove.kind == GAS) && types::genRandom(0, 20) == 0)
+		{
+			grid.set(x, y, cellAbove);
+			grid.set(x, y - 1, currentCell);
+
+		}
+		else if (x + randomOffset < grid.size && x + randomOffset >= 0)
+		{
+			CellData cellDiagonal = grid.get(x + randomOffset, y - 1);
+			CellData cellSide = grid.get(x + randomOffset, y);
+
+			if ((cellDiagonal.kind == FLUID || cellDiagonal.kind == GAS) && types::genRandom(0, 10) == 0)
+			{
+				grid.set(x, y, cellDiagonal);
+				grid.set(x + randomOffset, y - 1, currentCell);
+			}
+			else if ((cellSide.kind == FLUID || cellSide.kind == GAS) && types::genRandom(0, 2) == 0)
+			{
+				grid.set(x, y, cellSide);
+				grid.set(x + randomOffset, y, currentCell);
+			}
+			else if (types::genRandom(0, 1000) == 0 && cellBelow.kind != GAS)
+			{
+				createAir(x, y);
+			}
+		}
+	}
+	else if (y == 0)
+	{
+		createAir(x, y);
+	}
+
+}
+
+void World::createSmoke(int x, int y)
+{
+	CellData smoke =
+	{
+		.type = SMOKE,
+		.kind = GAS,
+		.color = types::color8{ 70, 70, 70 },
+		.flammability = 0,
+		.isUpdated = false
+	};
+
+	float f = types::genRandom(150, 255) / 255.0f;
+
+	smoke.color = smoke.color * f;
+	grid.set(x, y, smoke);
+}
+
+void World::updateSteam(int x, int y)
+{
+	CellData currentCell = grid.get(x, y);
+	float f = types::genRandom(100, 255) / 255.0f;
+	grid.get(x, y).color = types::color8{ 120, 120, 120 } *f;
+
+	if (y > 0 && y < grid.size - 1)
+	{
+		int randomOffset = types::genRandom(-1, 1);
+		currentCell.isUpdated = true;
+
+		// this is going out of bounds
+		CellData cellAbove = grid.get(x, y - 1);
+		CellData cellBelow = grid.get(x, y + 1);
+		
+
+		if ((cellAbove.kind == FLUID || cellAbove.kind == GAS) && types::genRandom(0, 20) == 0)
+		{
+			grid.set(x, y, cellAbove);
+			grid.set(x, y - 1, currentCell);
+
+		}
+		else if (x + randomOffset < grid.size && x + randomOffset >= 0)
+		{
+			CellData cellDiagonal = grid.get(x + randomOffset, y - 1);
+			CellData cellSide = grid.get(x + randomOffset, y);
+
+			if ((cellDiagonal.kind == FLUID || cellDiagonal.kind == GAS) && types::genRandom(0, 10) == 0)
+			{
+				grid.set(x, y, cellDiagonal);
+				grid.set(x + randomOffset, y - 1, currentCell);
+			}
+			else if ((cellSide.kind == FLUID || cellSide.kind == GAS) && types::genRandom(0, 2) == 0)
+			{
+				grid.set(x, y, cellSide);
+				grid.set(x + randomOffset, y, currentCell);
+			}
+			else if (types::genRandom(0, 10000) == 0 && cellBelow.kind != GAS && cellAbove.kind == GAS)
+			{
+				createWater(x, y);
+			}
+		}
+	}
+	else if (y == 0)
+	{
+		createAir(x, y);
+	}
+}
+
+void World::createSteam(int x, int y)
+{
+	CellData steam =
+	{
+		.type = STEAM,
+		.kind = GAS,
+		.color = types::color8{ 120, 120, 120 },
+		.flammability = 0,
+		.isUpdated = false
+	};
+
+	float f = types::genRandom(150, 255) / 255.0f;
+
+	steam.color = steam.color * f;
+	grid.set(x, y, steam);
+}
+
 
 void World::updateStone(int x, int y)
 {

@@ -11,6 +11,9 @@ enum CellType : uint8_t
 	WOOD, 
 	FIRE,
 	STONE,
+	GUNPOWDER,
+	SMOKE,
+	STEAM
 };
 
 enum CellKind : uint8_t
@@ -18,7 +21,8 @@ enum CellKind : uint8_t
 	FLUID = 0,
 	SOLID_IMMOVABLE,
 	SOLID_MOVABLE,
-	REACTION
+	REACTION,
+	GAS
 };
 
 struct CellData
@@ -27,6 +31,7 @@ struct CellData
 	CellKind kind = FLUID;
 	types::color8 color = { 255, 255, 255 };
 	uint8_t flammability = 0;
+	CellType combustsInto = AIR;
 	bool isUpdated = false;
 };
 
