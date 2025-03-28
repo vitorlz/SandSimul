@@ -8,8 +8,8 @@ public:
 	void run();
 
 private:
-	const int windowWidth = 800;
-	const int windowHeight = 800;
+	const int windowWidth = 1024;
+	const int windowHeight = 1024;
 
 	void initWindow();
 	void cleanup();

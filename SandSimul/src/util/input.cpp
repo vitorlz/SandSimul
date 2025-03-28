@@ -3,9 +3,11 @@
 #include "GLFW/glfw3.h"
 #include "iostream"
 
-void Input::init(GLFWwindow* window)
+void Input::init(GLFWwindow* window, int screenWidth, int screenHeight)
 {
 	this->window = window;
+	this->screenWidth = screenWidth;
+	this->screenHeight = screenHeight;
 }
 
 void Input::update()
@@ -38,18 +40,18 @@ void Input::update()
 	mouseX = x;
 	mouseY = y;
 
-	if (mouseX > 800)
+	if (mouseX > screenWidth)
 	{
-		mouseX = 800;
+		mouseX = screenWidth;
 	}
 	else if (mouseX < 0)
 	{
 		mouseX = 0;
 	}
 
-	if (mouseY > 800)
+	if (mouseY > screenHeight)
 	{
-		mouseY = 800;
+		mouseY = screenHeight;
 	}
 	else if (mouseY < 0)
 	{

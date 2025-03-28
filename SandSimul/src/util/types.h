@@ -8,7 +8,7 @@ namespace types
 {
 	struct color8
 	{
-		uint8_t r = 0, g = 0, b = 0;
+		uint8_t r = 0, g = 0, b = 0, a = 255;
 	};
 
 	struct Pos

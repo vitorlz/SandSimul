@@ -5,9 +5,11 @@
 #include "glm/glm.hpp"
 #include "algorithm"
 
-void World::init(Input* input)
+void World::init(Input* input, int screenWidth, int screenHeight)
 {
 	this->input = input;
+	this->screenWidth = screenWidth;
+	this->screenHeight = screenHeight;
 }
 
 void World::updateCells()
@@ -104,7 +106,7 @@ void World::updateCells()
 		for (int j = grid.size - 1; j >= 0; j--)
 		{
 			CellData& cell = grid.get(i, j);
-			cell.isUpdated = false;\
+			cell.isUpdated = false;
 			
 			// we can write different simulations here and just also update the texture that is rendered to the screen.
 			// Like, we can have a separate particle simulation that tracks the cells' velocity and gravity. 
@@ -191,8 +193,8 @@ void World::spawnCells()
 
 	static CellType lastBrushType;
 	
-	float relativeX = input->mouseX / 800.0;
-	float relativeY = input->mouseY / 800.0;
+	float relativeX = input->mouseX / float(screenWidth);
+	float relativeY = input->mouseY / float(screenHeight);
 
 	int centerX = (int)(relativeX * grid.size);
 	int centerY = (int)(relativeY * grid.size);
@@ -275,7 +277,7 @@ void World::createSand(int x, int y)
 	{
 		.type = SAND,
 		.kind = SOLID_MOVABLE,
-		.color = types::color8{.r = 247, .g = 235, .b = 178 },
+		.color = types::color8{.r = 220, .g = 215, .b = 148 },
 		.flammability = 0,
 		.isUpdated = false
 	};
@@ -434,7 +436,7 @@ void World::createWood(int x, int y)
 	{
 		.type = WOOD,
 		.kind = SOLID_IMMOVABLE,
-		.color = types::color8{ 99, 62, 41 },
+		.color = types::color8{ 79, 42, 21 },
 		.flammability = 130,
 		.combustsInto = SMOKE,
 		.isUpdated = false

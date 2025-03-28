@@ -7,7 +7,7 @@
 class World
 {
 public:
-	void init(Input* input);
+	void init(Input* input, int screenWidth, int screenHeight);
 	void updateCells();
 
 	Input* input;
@@ -61,4 +61,7 @@ private:
 	} brush;
 
 	bool mouseDownLastFrame = false;
+
+	int screenWidth;
+	int screenHeight;
 };

@@ -6,9 +6,9 @@
 Application::Application()
 {
     initWindow();
-    input.init(window);
-    world.init(&input);
-    renderer.init(&world.grid);
+    input.init(window, windowWidth, windowHeight);
+    world.init(&input, windowWidth, windowHeight);
+    renderer.init(&world.grid, windowWidth, windowHeight);
 }
 
 void Application::run()
@@ -45,8 +45,8 @@ void Application::initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
