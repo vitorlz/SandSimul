@@ -29,7 +29,6 @@ std::vector<types::color8>& Grid::getCellTexture()
 void Grid::setCellTextureColor(int x, int y, types::color8 color)
 {
 	cellTexture[y * size + x] = color;
-
 }
 
 bool Grid::isOutOfBounds(int x, int y)

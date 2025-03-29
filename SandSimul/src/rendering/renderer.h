@@ -2,7 +2,7 @@
 #include "../world/grid.h"
 #include "../util/Shader.h"
 
-constexpr int numOfCascades = 5;
+constexpr int numOfCascades = 4;
 
 class Renderer
 {
@@ -26,8 +26,8 @@ private:
 	int screenWidth;
 	int screenHeight;
 
-	int probeWidthBase = 8;
-	int probeHeightBase = 8;
+	int probeWidthBase = 4;
+	int probeHeightBase = 4;
 
 	unsigned int cascades[numOfCascades];
 

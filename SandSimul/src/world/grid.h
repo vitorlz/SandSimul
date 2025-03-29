@@ -29,7 +29,7 @@ struct CellData
 {
 	CellType type = AIR;
 	CellKind kind = FLUID;
-	types::color8 color = { 255, 255, 255 };
+	types::color8 color = { 0, 0, 0, 0 };
 	uint8_t flammability = 0;
 	CellType combustsInto = AIR;
 	bool isUpdated = false;

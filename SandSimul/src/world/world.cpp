@@ -436,7 +436,7 @@ void World::createWood(int x, int y)
 	{
 		.type = WOOD,
 		.kind = SOLID_IMMOVABLE,
-		.color = types::color8{ 79, 42, 21 },
+		.color = types::color8{ 79, 42, 21, 100 },
 		.flammability = 130,
 		.combustsInto = SMOKE,
 		.isUpdated = false
@@ -793,7 +793,7 @@ void World::createAir(int x, int y)
 	{
 		.type = AIR,
 		.kind = FLUID,
-		.color = types::color8{ 255, 255, 255 },
+		.color = types::color8{ 0, 0, 0, 0 },
 		.flammability = 0,
 		.isUpdated = false
 	};
