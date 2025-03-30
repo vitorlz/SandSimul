@@ -604,7 +604,7 @@ void World::createStone(int x, int y)
 	{
 		.type = STONE,
 		.kind = SOLID_IMMOVABLE,
-		.color = types::color8{ 100, 100, 100 },
+		.color = types::color8{ 255, 255, 255 },
 		.flammability = 0,
 		.isUpdated = false
 	};

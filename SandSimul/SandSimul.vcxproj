@@ -99,6 +99,8 @@
     <ClInclude Include="src\world\world.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\cascadeMipmap.frag" />
+    <None Include="shaders\cascadeMipmap.vert" />
     <None Include="shaders\cell.frag" />
     <None Include="shaders\cell.vert" />
     <None Include="shaders\post.frag" />

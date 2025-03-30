@@ -11,35 +11,21 @@ uniform int numOfCascades;
 uniform vec2 probeIntervals;
 uniform vec2 screenSize;
 
-int intervalLengthBase = 15;
+int intervalLengthBase = 3;
 
 const float PI = 3.14159265359;
 
 vec4 raymarch(vec2 start, vec2 end, vec2 dir, float stepSize, float maxSteps);
 
 
-vec4 merge(float rayIndex, vec4 rayRadiance)
+vec4 merge(float rayIndex, vec4 rayRadiance, vec2 probeCoord, vec2 probeCenter)
 {
 	if (rayRadiance.a == 0.0 || cascadeIndex >= numOfCascades - 1.0)
-		return vec4(rayRadiance.rgb, 0.0);
+		return vec4(rayRadiance.rgb, rayRadiance.a);
 
-	// figure out the coordinates of cascade N's probe's center.
+	vec2 probeSizeN1 = probeIntervals * 2;
 
-	float probeSize = probeIntervals.x * probeIntervals.y;
-	
-	//vec2 numOfProbes = vec2(screenSize.x / probeSize, screenSize.y / probeSize);
-	
-	vec2 probeCoord = vec2(gl_FragCoord.x / probeSize, gl_FragCoord.y / probeSize);
-
-	//vec2 probeCenter = vec2(probeCoord.x * probeSize + probeSize / 2, probeCoord.y * probeSize + probeSize / 2);
-
-	vec2 probeCenter = (probeCoord + 0.5) * probeSize;
-	
-	// use probeCenter to calculate figure out the top left probe in N+1 and get the other 3 probes from there
-
-	float probeSizeN1 = (probeIntervals.x * probeIntervals.y) * 4;
-
-	vec2 topLeftN1 =  vec2(probeCenter.x / probeSizeN1 - 0.5, probeCenter.y / probeSizeN1 - 0.5);
+	vec2 topLeftN1 =  vec2(probeCenter.x / probeSizeN1.x - 0.5, probeCenter.y / probeSizeN1.y - 0.5);
 
 	vec2 ratio = fract(topLeftN1);
 
@@ -49,6 +35,8 @@ vec4 merge(float rayIndex, vec4 rayRadiance)
 	
 	// these are the weights for TL, TR, BL, BR respectively:
 	vec4 weights = vec4((1.0 - ratio.x) * (1.0 - ratio.y), ratio.x * (1.0 - ratio.y), (1.0 - ratio.x) * ratio.y, ratio.x * ratio.y);
+
+	//vec4 weights = vec4(pow(0.25,2), 0.25*0.75, pow(0.75,2), 0.1875);
 
 	// now we need to get the radiance of the 4 rays that point in the same direction as the current ray and add their weighted radiance to the radiance
 	// of the current ray. We also need to account for the visibility term.
@@ -66,17 +54,17 @@ vec4 merge(float rayIndex, vec4 rayRadiance)
 
 			// get the ray in probe N1
 			float rayIndexN1 = rayIndex * 4 + i; 
-
+			
 			vec2 rayN1TexelCoord = vec2( 
-				probeN1.x * probeSizeN1 + mod(rayIndexN1, probeIntervals.x * 2), 
-				floor(rayIndexN1 / (probeIntervals.x * 2)) + probeN1.y * probeSizeN1
+				probeN1.x * probeSizeN1.x + mod(rayIndexN1, probeSizeN1.x), 
+				probeN1.y * probeSizeN1.y + floor(float(rayIndexN1) / (probeSizeN1.y))
 			);
 
 			vec4 rayRadianceN1 = texture(cascadeN1, rayN1TexelCoord / screenSize);
 
 			// merge 
 
-			mergedRadiance +=  vec4(rayRadianceN1.rgb * rayRadiance.a, 1.0) * weights[j];
+			mergedRadiance +=  vec4(rayRadianceN1.rgb * rayRadiance.a, rayRadiance.a) * weights[j];
 		}
 
 		totalMergedRadiance += mergedRadiance / 4.0;
@@ -101,7 +89,7 @@ void main()
 	// use the ray index to calculate the ray angle and direction.
 	 
 	float rayAngle = 2.0 * PI * rayIndex / (probeIntervals.x * probeIntervals.y);
-	vec2 rayDir =  vec2(cos(rayAngle), sin(rayAngle));
+	vec2 rayDir =  vec2(cos(rayAngle), -sin(rayAngle));
 
 	// each fragment represents a ray. For each ray/fragment, raymarch through the screen texture in the direction calculated above. Get the
 	// radiance when we hit something.
@@ -113,11 +101,10 @@ void main()
 	float intervalOrigin = intervalLengthBase * (1 - pow(4, cascadeIndex)) /  (1 - 4);
 
 	// the start of the ray is just the rayDir scaled by interval origin because interval origin is just sum of the length of all other intervals. 
-	float probeSize = probeIntervals.x * probeIntervals.y;
-	vec2 probeCoord = vec2(floor(gl_FragCoord.x / probeSize), floor(gl_FragCoord.y / probeSize));
-	//vec2 probeCenter = vec2(probeCoord.x * probeSize + probeSize / 2, probeCoord.y * probeSize + probeSize / 2);
+	//float probeSize = probeIntervals.x * probeIntervals.y;
 	
-	vec2 probeCenter = (probeCoord + 0.5) * probeSize;
+	vec2 probeCoord = vec2(floor(gl_FragCoord.x / probeIntervals.x), floor(gl_FragCoord.y / probeIntervals.y));
+	vec2 probeCenter = (probeCoord + 0.5) * probeIntervals.x;
 
 	vec2 rayStart = probeCenter + intervalOrigin * rayDir;
 	vec2 rayEnd = rayStart + intervalLength * rayDir;
@@ -127,31 +114,31 @@ void main()
 	// after we raymarch, merge this ray with the rays of cascade N + 1 using bilinear interpolation. Then in the end the radiance field is going to be 
 	// encoded into cascade 0, and we sample that for the lighting.	
 
-	FragColor = merge(rayIndex, rayRadiance);
+	vec4 color = merge(rayIndex, rayRadiance, probeCoord, probeCenter);
 
+	FragColor = color;
 
-	//FragColor = vec4(intervalOrigin / screenSize.x, intervalLength / screenSize.x, 0.0, 1.0);
-
-
-	//FragColor = vec4(rayStart / screenSize, 0.0, 1.0);
-
-	//FragColor = vec4(rayPosInProbe.x /  probeIntervals.x, rayPosInProbe.y /  probeIntervals.x, 0.0, 1.0);
 }
 
 
 // naive and unoptimized raymarching for testing
 
+// TODO: sdf
+
 vec4 raymarch(vec2 start, vec2 end, vec2 dir, float stepSize, float intervalLength)
 {
 	
-	vec2 marchStep = dir * stepSize;
+	float dist = intervalLength;
 
 	vec2 uv = start;
 
-	int steps = int(intervalLength / stepSize);
+	float steps = int(ceil(dist/stepSize));
 
-	for(int i = 0; i < steps; i++)
+	vec2 marchStep = dir * dist / float(steps);
+
+	for(int i = 0; i <= steps; i++)
 	{
+		
 		
 		vec2 texCoord = uv / screenSize;
 
@@ -160,7 +147,9 @@ vec4 raymarch(vec2 start, vec2 end, vec2 dir, float stepSize, float intervalLeng
 			return  vec4(0.0, 0.0, 0.0, 0.0);
 		}
 
-		vec4 currentPixel =  texture(unlitScene, texCoord);
+		vec4 currentPixel = texture(unlitScene, texCoord);
+
+		//currentPixel = vec4(pow(currentPixel.rgb, vec3(2.2)), currentPixel.a);
 
 		if(currentPixel.a > 0.2)
 		{
@@ -171,7 +160,7 @@ vec4 raymarch(vec2 start, vec2 end, vec2 dir, float stepSize, float intervalLeng
 				return vec4(0.0);
 		}
 
-		uv += marchStep * (1.0 - 1e-4);
+		uv += marchStep;
 	}
 
 	return  vec4(0.0, 0.0, 0.0, 1.0);

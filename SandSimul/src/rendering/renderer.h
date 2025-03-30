@@ -2,7 +2,7 @@
 #include "../world/grid.h"
 #include "../util/Shader.h"
 
-constexpr int numOfCascades = 4;
+constexpr int numOfCascades = 6;
 
 class Renderer
 {
@@ -23,6 +23,9 @@ private:
 	unsigned int unlitFBO;
 	unsigned int unlitTexture;
 
+	unsigned int cascadeMipmapFBO;
+	unsigned int cascadeMipmapTexture;
+
 	int screenWidth;
 	int screenHeight;
 
@@ -36,4 +39,5 @@ private:
 	Shader cellShader;
 	Shader cascadesShader;
 	Shader postShader;
+	Shader cascadeMipmapShader;
 };

@@ -17,6 +17,7 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
     cellShader = Shader("shaders/cell.vert", "shaders/cell.frag");
     cascadesShader = Shader("shaders/radianceCascades.vert", "shaders/radianceCascades.frag");
     postShader = Shader("shaders/post.vert", "shaders/post.frag");
+    cascadeMipmapShader = Shader("shaders/cascadeMipmap.vert", "shaders/cascadeMipmap.frag");
 
     float vertices[] = {
         // positions   // texCoords
@@ -69,7 +70,7 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
     glGenTextures(1, &unlitTexture);
     glBindTexture(GL_TEXTURE_2D, unlitTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -97,12 +98,12 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
 
         glBindTexture(GL_TEXTURE_2D, cascades[i]);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         float borderColor[]{ 0.0f, 0.0f, 0.0f, 0.0f };
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
@@ -118,7 +119,34 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
+    // create cascade0 mipmap texture and fbo
+
+    glGenFramebuffers(1, &cascadeMipmapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, cascadeMipmapFBO);
+
+    glGenTextures(1, &cascadeMipmapTexture);
+    glBindTexture(GL_TEXTURE_2D, cascadeMipmapTexture);
+
+    int mipmapWidth = screenWidth / probeWidthBase;
+    int mipmapHeight = screenHeight / probeHeightBase;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mipmapWidth, mipmapHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cascadeMipmapTexture, 0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);   
 }
 
 void Renderer::update()
@@ -176,6 +204,25 @@ void Renderer::update()
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
+    // cascade mimap pass
+
+    glBindFramebuffer(GL_FRAMEBUFFER, cascadeMipmapFBO);
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    cascadeMipmapShader.use();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, cascades[0]);
+
+    cascadeMipmapShader.setInt("cascade0", 0);
+
+    cascadeMipmapShader.setVec2("probeIntervalsCascade0", probeWidthBase, probeHeightBase);
+    cascadeMipmapShader.setVec2("screenSize", screenWidth, screenHeight);
+
+    glBindVertexArray(screenVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // final pass
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -191,7 +238,7 @@ void Renderer::update()
     postShader.setInt("unlitTexture", 0);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, cascades[0]);
+    glBindTexture(GL_TEXTURE_2D, cascadeMipmapTexture);
 
     postShader.setInt("cascade0", 1);
 
