@@ -1,12 +1,14 @@
 #include "renderer.h"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include "../util/shaderManager.h"
 
-void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
+void Renderer::init(Grid* grid, int screenWidth, int screenHeight, ShaderManager* shaderManager)
 {
     this->screenWidth = screenWidth;
     this->screenHeight = screenHeight;
     this->grid = grid;
+    this->shaderManager = shaderManager;
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -14,10 +16,7 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
         abort();
     }
 
-    cellShader = Shader("shaders/cell.vert", "shaders/cell.frag");
-    cascadesShader = Shader("shaders/radianceCascades.vert", "shaders/radianceCascades.frag");
-    postShader = Shader("shaders/post.vert", "shaders/post.frag");
-    cascadeMipmapShader = Shader("shaders/cascadeMipmap.vert", "shaders/cascadeMipmap.frag");
+    shaderManager->loadShaders();
 
     float vertices[] = {
         // positions   // texCoords
@@ -105,8 +104,8 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        float borderColor[]{ 0.0f, 0.0f, 0.0f, 0.0f };
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+        /*float borderColor[]{ 0.0f, 0.0f, 0.0f, 0.0f };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);*/
 
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, cascades[i], 0);
@@ -146,7 +145,9 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);   
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glViewport(0, 0, screenWidth, screenHeight);
 }
 
 void Renderer::update()
@@ -156,6 +157,8 @@ void Renderer::update()
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    Shader& cellShader = shaderManager->getShader("cellShader");
 
     cellShader.use();
 
@@ -171,7 +174,8 @@ void Renderer::update()
 
     // radiance cascades pass
     glBindFramebuffer(GL_FRAMEBUFFER, radianceFBO);
-   
+
+    Shader& cascadesShader = shaderManager->getShader("cascadesShader");
     cascadesShader.use();
 
     glActiveTexture(GL_TEXTURE0);
@@ -210,6 +214,8 @@ void Renderer::update()
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    
+    Shader& cascadeMipmapShader = shaderManager->getShader("cascadeMipmapShader");
 
     cascadeMipmapShader.use();
 
@@ -229,6 +235,8 @@ void Renderer::update()
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    Shader& postShader = shaderManager->getShader("postShader");
 
     postShader.use();
 
@@ -254,5 +262,4 @@ void Renderer::cleanup()
 {
     glDeleteVertexArrays(1, &screenVAO);
     glDeleteBuffers(1, &screenVBO);
-    glDeleteProgram(cellShader.ID);
 }

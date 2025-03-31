@@ -18,4 +18,5 @@ private:
 	Input input;
 	GLFWwindow* window;
 	Renderer renderer;
+	ShaderManager shaderManager;
 };

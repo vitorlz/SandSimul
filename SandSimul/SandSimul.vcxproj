@@ -85,6 +85,7 @@
     <ClCompile Include="src\rendering\renderer.cpp" />
     <ClCompile Include="src\util\input.cpp" />
     <ClCompile Include="src\util\Shader.cpp" />
+    <ClCompile Include="src\util\shaderManager.cpp" />
     <ClCompile Include="src\world\grid.cpp" />
     <ClCompile Include="src\world\grid.h" />
     <ClCompile Include="src\world\world.cpp" />
@@ -94,6 +95,7 @@
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\rendering\renderer.h" />
     <ClInclude Include="src\util\input.h" />
+    <ClInclude Include="src\util\shaderManager.h" />
     <ClInclude Include="src\util\types.h" />
     <ClInclude Include="src\util\Shader.h" />
     <ClInclude Include="src\world\world.h" />

@@ -11,17 +11,16 @@ uniform int numOfCascades;
 uniform vec2 probeIntervals;
 uniform vec2 screenSize;
 
-int intervalLengthBase = 3;
+int intervalLengthBase = 4;
 
 const float PI = 3.14159265359;
 
 vec4 raymarch(vec2 start, vec2 end, vec2 dir, float stepSize, float maxSteps);
 
-
 vec4 merge(float rayIndex, vec4 rayRadiance, vec2 probeCoord, vec2 probeCenter)
 {
 	if (rayRadiance.a == 0.0 || cascadeIndex >= numOfCascades - 1.0)
-		return vec4(rayRadiance.rgb, rayRadiance.a);
+		return vec4(rayRadiance.rgb, 1.0 - rayRadiance.a);
 
 	vec2 probeSizeN1 = probeIntervals * 2;
 
@@ -53,30 +52,36 @@ vec4 merge(float rayIndex, vec4 rayRadiance, vec2 probeCoord, vec2 probeCenter)
 			vec2 probeN1 = topLeftProbeCoordN1 + offsets[j];
 
 			// get the ray in probe N1
-			float rayIndexN1 = rayIndex * 4 + i; 
 			
+
+			float rayIndexN1 = rayIndex * 4 + i;
+
 			vec2 rayN1TexelCoord = vec2( 
 				probeN1.x * probeSizeN1.x + mod(rayIndexN1, probeSizeN1.x), 
 				probeN1.y * probeSizeN1.y + floor(float(rayIndexN1) / (probeSizeN1.y))
 			);
 
-			vec4 rayRadianceN1 = texture(cascadeN1, rayN1TexelCoord / screenSize);
+			vec2 texCoord = rayN1TexelCoord / (screenSize);
+
+			vec4 rayRadianceN1 = texture(cascadeN1, texCoord);
 
 			// merge 
 
 			mergedRadiance +=  vec4(rayRadianceN1.rgb * rayRadiance.a, rayRadiance.a) * weights[j];
 		}
-
+		
 		totalMergedRadiance += mergedRadiance / 4.0;
 
 		mergedRadiance = vec4(0.0);
 		
 	}
+
+
 	// based on the current probe's position bilinearly interpolate between the 4 nearest probes
 	// get the average of 4 rays in the direction of the current ray in each probe in n + 1 and use the weights to add
 	// that to the radiance of the current ray.
 
-	return vec4(rayRadiance.rgb + totalMergedRadiance.rgb, rayRadiance.a);
+	return vec4(rayRadiance.rgb + totalMergedRadiance.rgb, 1.0);
 }
 
 void main()
@@ -89,7 +94,7 @@ void main()
 	// use the ray index to calculate the ray angle and direction.
 	 
 	float rayAngle = 2.0 * PI * rayIndex / (probeIntervals.x * probeIntervals.y);
-	vec2 rayDir =  vec2(cos(rayAngle), -sin(rayAngle));
+	vec2 rayDir =  vec2(cos(rayAngle), sin(rayAngle));
 
 	// each fragment represents a ray. For each ray/fragment, raymarch through the screen texture in the direction calculated above. Get the
 	// radiance when we hit something.
@@ -104,7 +109,7 @@ void main()
 	//float probeSize = probeIntervals.x * probeIntervals.y;
 	
 	vec2 probeCoord = vec2(floor(gl_FragCoord.x / probeIntervals.x), floor(gl_FragCoord.y / probeIntervals.y));
-	vec2 probeCenter = (probeCoord + 0.5) * probeIntervals.x;
+	vec2 probeCenter = (probeCoord + 0.5) * probeIntervals;
 
 	vec2 rayStart = probeCenter + intervalOrigin * rayDir;
 	vec2 rayEnd = rayStart + intervalLength * rayDir;
@@ -134,17 +139,15 @@ vec4 raymarch(vec2 start, vec2 end, vec2 dir, float stepSize, float intervalLeng
 
 	float steps = int(ceil(dist/stepSize));
 
-	vec2 marchStep = dir * dist / float(steps);
+	vec2 marchStep = (dir );
 
 	for(int i = 0; i <= steps; i++)
 	{
-		
-		
-		vec2 texCoord = uv / screenSize;
+		vec2 texCoord = (uv ) / (screenSize);
 
 		if (texCoord.x < 0.0 || texCoord.x > 1.0 || texCoord.y < 0.0 || texCoord.y > 1.0) 
 		{
-			return  vec4(0.0, 0.0, 0.0, 0.0);
+			return vec4(0.0);
 		}
 
 		vec4 currentPixel = texture(unlitScene, texCoord);

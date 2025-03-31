@@ -1,13 +1,13 @@
 #pragma once
 #include "../world/grid.h"
-#include "../util/Shader.h"
+#include "../util/shaderManager.h"
 
 constexpr int numOfCascades = 6;
 
 class Renderer
 {
 public:
-	void init(Grid* grid, int screenWidth, int screenHeight);
+	void init(Grid* grid, int screenWidth, int screenHeight, ShaderManager* shaderManager);
 	void update();
 	void cleanup();
 	
@@ -34,10 +34,7 @@ private:
 
 	unsigned int cascades[numOfCascades];
 
-	Grid* grid;
+	ShaderManager* shaderManager;
 
-	Shader cellShader;
-	Shader cascadesShader;
-	Shader postShader;
-	Shader cascadeMipmapShader;
+	Grid* grid;
 };

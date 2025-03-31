@@ -8,7 +8,7 @@ Application::Application()
     initWindow();
     input.init(window, windowWidth, windowHeight);
     world.init(&input, windowWidth, windowHeight);
-    renderer.init(&world.grid, windowWidth, windowHeight);
+    renderer.init(&world.grid, windowWidth, windowHeight, &shaderManager);
 }
 
 void Application::run()
@@ -26,6 +26,10 @@ void Application::run()
         if (deltaTime >= limit)
         {
             glfwPollEvents();
+
+            if (input.keyPressed[GLFW_KEY_K])
+                shaderManager.reloadShaders();
+            
 
             input.update();
             world.updateCells();

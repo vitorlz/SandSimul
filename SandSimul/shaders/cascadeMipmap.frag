@@ -28,14 +28,14 @@ vec4 calculateRadiance()
 
 		vec2 rayTexelCoord = vec2( 
 			currentProbe.x * probeIntervalsCascade0.x + mod(rayIndex, probeIntervalsCascade0.x), 
-			currentProbe.y * probeIntervalsCascade0.x + floor(float(rayIndex) / probeIntervalsCascade0.x) 
+			currentProbe.y * probeIntervalsCascade0.y + floor(float(rayIndex) / probeIntervalsCascade0.x) 
 		);
 		
-		vec4 rayRadiance = texture(cascade0,vec2(rayTexelCoord.x / screenSize.x, rayTexelCoord.y / screenSize.y));
+		vec4 rayRadiance = texture(cascade0,vec2((rayTexelCoord)/ (screenSize)));
 
 		if (any(isnan(rayRadiance.rgb)) || any(isinf(rayRadiance.rgb))) 
 		{
-			rayRadiance = vec4(0.0);  
+			continue;  
 		}
 		// merge
 
@@ -46,8 +46,6 @@ vec4 calculateRadiance()
 	
 	return totalRadiance;
 }
-
-
 
 
 void main()

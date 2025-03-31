@@ -5,7 +5,8 @@ struct GLFWwindow;
 class Input
 {
 public:
-	void init(GLFWwindow* window, int screenWidth, int screenHeight);
+	void init(GLFWwindow* window, int 
+		, int screenHeight);
 	void update();
 
 	bool isrightMouseDown = false;
