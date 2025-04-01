@@ -33,8 +33,8 @@ private:
 	int screenWidth;
 	int screenHeight;
 
-	int probeWidthBase = 4;
-	int probeHeightBase = 4;
+	int probeWidthBase = 8;
+	int probeHeightBase = 8;
 
 	int maxJfaJump = 2048;
 

@@ -13,7 +13,7 @@ uniform vec2 probeIntervals;
 uniform int multiplier;
 //uniform vec2 screenSize;
 
-float intervalLengthBase = 4;
+float intervalLengthBase = 10;
 
 const vec2 texelSizeN1 = 1.0 / textureSize(cascadeN1, 0);
 
@@ -148,7 +148,7 @@ void main()
 	// use the ray index to calculate the ray angle and direction.
 	 
 	float rayAngle = 2.0 * PI * rayIndex / (probeIntervals.x * probeIntervals.y);
-	vec2 rayDir =  vec2(cos(rayAngle), -sin(rayAngle));
+	vec2 rayDir =  vec2(cos(rayAngle), sin(rayAngle));
 
 	// each fragment represents a ray. For each ray/fragment, raymarch through the screen texture in the direction calculated above. Get the
 	// radiance when we hit something.
@@ -198,11 +198,12 @@ void main()
 
 		vec2 probeN1Center = (probeN1 + 0.5) * probeSizeN1;
 
-		vec2 start = probeN1Center + intervalOrigin * rayDir;
+		
+		vec2 end = probeN1Center + intervalLength * rayDir;
 
-		radiances[k] = raymarchDistanceField(start, rayDir, intervalLength);
+		radiances[k] = raymarchDistanceField(rayStart, normalize(end - rayStart), intervalLength);
 
-		//radiances[k] = raymarch(start, rayDir, intervalLength, 1);
+		//radiances[k] = raymarch(rayStart, rayDir, intervalLength, 1);
 
 		radiances[k] = mergeWithProbe(rayIndex, radiances[k], probeN1);
 
