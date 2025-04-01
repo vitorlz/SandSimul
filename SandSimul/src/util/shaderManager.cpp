@@ -7,6 +7,7 @@ void ShaderManager::loadShaders()
     shaders.insert({ "cascadesShader", Shader("shaders/radianceCascades.vert", "shaders/radianceCascades.frag") });
     shaders.insert({ "postShader",Shader("shaders/post.vert", "shaders/post.frag") });
     shaders.insert({ "cascadeMipmapShader", Shader("shaders/cascadeMipmap.vert", "shaders/cascadeMipmap.frag") });
+    shaders.insert({ "jfaShader", Shader("shaders/jfa.vert", "shaders/jfa.frag") });
 }
 
 void ShaderManager::reloadShaders()

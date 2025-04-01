@@ -69,7 +69,7 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight, ShaderManager
     glGenTextures(1, &unlitTexture);
     glBindTexture(GL_TEXTURE_2D, unlitTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -79,7 +79,21 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight, ShaderManager
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, unlitTexture, 0);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-   
+
+    glGenTextures(1, &firstJfaTex);
+    glBindTexture(GL_TEXTURE_2D, firstJfaTex);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, firstJfaTex, 0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     }
@@ -127,7 +141,7 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight, ShaderManager
     glGenTextures(1, &cascadeMipmapTexture);
     glBindTexture(GL_TEXTURE_2D, cascadeMipmapTexture);
 
-    int mipmapWidth = screenWidth / probeWidthBase;
+    int mipmapWidth =  screenWidth / probeWidthBase;
     int mipmapHeight = screenHeight / probeHeightBase;
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mipmapWidth, mipmapHeight, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -147,13 +161,49 @@ void Renderer::init(Grid* grid, int screenWidth, int screenHeight, ShaderManager
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glViewport(0, 0, screenWidth, screenHeight);
+
+    // JFA
+
+    glGenFramebuffers(1, &jfaFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, jfaFbo);
+
+    for (int i = 0; i < 2; i++)
+    {
+        glGenTextures(1, &jfaTex[i]);
+
+        glBindTexture(GL_TEXTURE_2D, jfaTex[i]);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, jfaTex[i], 0);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+   
+
 }
 
 void Renderer::update()
 {
+
+    glViewport(0, 0, screenWidth, screenHeight);
     // unlit scene pass
     glBindFramebuffer(GL_FRAMEBUFFER, unlitFBO);
+
+    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -172,9 +222,54 @@ void Renderer::update()
     glBindVertexArray(screenVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    // radiance cascades pass
-    glBindFramebuffer(GL_FRAMEBUFFER, radianceFBO);
+    // ----------------------------------------------- JFA PASS ---------------------------------------------------------
+    
+    // unlit scene pass
+    glBindFramebuffer(GL_FRAMEBUFFER, jfaFbo);
 
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+    bool useJfaTex0 = true;
+    bool firstIteration = true;
+
+    // ping pong buffers
+    for (int i = maxJfaJump; i >= 1; i /= 2)
+    {
+        unsigned int drawBuffer = useJfaTex0 ? GL_COLOR_ATTACHMENT0 : GL_COLOR_ATTACHMENT1;
+        glDrawBuffer(drawBuffer);
+        
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glActiveTexture(GL_TEXTURE0);
+        if (firstIteration)
+        {
+            glBindTexture(GL_TEXTURE_2D, firstJfaTex);
+            firstIteration = false;
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, useJfaTex0 ? jfaTex[1] : jfaTex[0]);
+        }
+            
+
+        // USE JFA SHADER
+
+        Shader& jfaShader = shaderManager->getShader("jfaShader");
+        jfaShader.use();
+
+        jfaShader.setInt("tex", 0);
+        jfaShader.setInt("jumpSize", i);
+
+        glBindVertexArray(screenVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        useJfaTex0 = !useJfaTex0;
+    }
+
+    // ----------------------------------------------- RC PASS ---------------------------------------------------------
+   
+    glBindFramebuffer(GL_FRAMEBUFFER, radianceFBO);
+   
     Shader& cascadesShader = shaderManager->getShader("cascadesShader");
     cascadesShader.use();
 
@@ -182,12 +277,19 @@ void Renderer::update()
     glBindTexture(GL_TEXTURE_2D, unlitTexture);
 
     cascadesShader.setInt("unlitTexture", 0);
-    
+
     glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, jfaTex[useJfaTex0]);
+    
+    cascadesShader.setInt("distanceField", 1);
+
+    glActiveTexture(GL_TEXTURE2);
   
     for (int i = numOfCascades - 1; i >= 0; i--)
     {
         glDrawBuffer(GL_COLOR_ATTACHMENT0 + i);
+        glClearColor(0.0, 0.0, 0.0, 0.0);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         // at i = numOfCascades - 1 there is no merging to be done, so we dont send cascade N + 1, but we still need to send the rest of the info
         // and render the screen quad.
@@ -199,18 +301,20 @@ void Renderer::update()
         int probeWidth = probeWidthBase * pow(2.0, i);
         int probeHeight = probeHeightBase * pow(2.0, i);
 
-        cascadesShader.setInt("cascadeN1", 1);
+        cascadesShader.setInt("cascadeN1", 2);
         cascadesShader.setInt("numOfCascades", numOfCascades);
         cascadesShader.setInt("cascadeIndex", i);
         cascadesShader.setVec2("probeIntervals", probeWidth, probeHeight);
-        cascadesShader.setVec2("screenSize", screenWidth, screenHeight);
+        //cascadesShader.setVec2("screenSize", screenWidth, screenHeight);
 
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-    // cascade mimap pass
+    // cascade mipmap pass
 
+    glViewport(0, 0, screenWidth / probeWidthBase, screenHeight / probeHeightBase);
     glBindFramebuffer(GL_FRAMEBUFFER, cascadeMipmapFBO);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -231,6 +335,8 @@ void Renderer::update()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // final pass
+    glViewport(0, 0, screenWidth, screenHeight);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);

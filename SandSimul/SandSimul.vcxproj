@@ -105,6 +105,8 @@
     <None Include="shaders\cascadeMipmap.vert" />
     <None Include="shaders\cell.frag" />
     <None Include="shaders\cell.vert" />
+    <None Include="shaders\jfa.frag" />
+    <None Include="shaders\jfa.vert" />
     <None Include="shaders\post.frag" />
     <None Include="shaders\post.vert" />
     <None Include="shaders\radianceCascades.frag" />

@@ -78,5 +78,7 @@
     <None Include="shaders\post.frag" />
     <None Include="shaders\cascadeMipmap.frag" />
     <None Include="shaders\cascadeMipmap.vert" />
+    <None Include="shaders\jfa.vert" />
+    <None Include="shaders\jfa.frag" />
   </ItemGroup>
 </Project>

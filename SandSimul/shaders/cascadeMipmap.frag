@@ -7,6 +7,8 @@ uniform sampler2D cascade0;
 uniform vec2 probeIntervalsCascade0;
 uniform vec2 screenSize;
 
+const vec2 texelSizeCascade0 = 1.0 / textureSize(cascade0, 0);
+
 vec4 calculateRadiance()
 {
 	float probeSize = probeIntervalsCascade0.x * probeIntervalsCascade0.y; 
@@ -31,19 +33,18 @@ vec4 calculateRadiance()
 			currentProbe.y * probeIntervalsCascade0.y + floor(float(rayIndex) / probeIntervalsCascade0.x) 
 		);
 		
-		vec4 rayRadiance = texture(cascade0,vec2((rayTexelCoord)/ (screenSize)));
-
+		vec4 rayRadiance = texture(cascade0, rayTexelCoord * texelSizeCascade0);
+	
 		if (any(isnan(rayRadiance.rgb)) || any(isinf(rayRadiance.rgb))) 
 		{
 			continue;  
 		}
-		// merge
-
+		
 		probeRadiance += vec4(rayRadiance.rgb, 1.0);
 	}
 
 	totalRadiance += probeRadiance / probeSize;
-	
+
 	return totalRadiance;
 }
 
