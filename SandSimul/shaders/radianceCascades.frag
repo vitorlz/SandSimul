@@ -13,12 +13,11 @@ uniform vec2 probeIntervals;
 uniform int multiplier;
 //uniform vec2 screenSize;
 
-float intervalLengthBase = 10;
+float intervalLengthBase = 4;
 
 const vec2 texelSizeN1 = 1.0 / textureSize(cascadeN1, 0);
 
 const float PI = 3.14159265359;
-
 vec4 raymarch(vec2 start, vec2 dir,float maxSteps, int stepSize);
 
 vec4 raymarchDistanceField(vec2 start, vec2 dir, float intervalLength);
@@ -79,13 +78,8 @@ vec4 merge(float rayIndex, vec4 rayRadiance, vec2 probeCoord, vec2 probeCenter, 
 		}
 		
 		totalMergedRadiance += mergedRadiance / 4.0 ;
-
 		mergedRadiance = vec4(0.0);
-		
 	}
-
-
-
 
 	// based on the current probe's position bilinearly interpolate between the 4 nearest probes
 	// get the average of 4 rays in the direction of the current ray in each probe in n + 1 and use the weights to add
@@ -113,9 +107,10 @@ vec4 mergeWithProbe(float rayIndex, vec4 rayRadiance, vec2 probeToMerge)
 
 		float rayIndexN1 = rayIndex * 4 + i;
 
+
 		vec2 rayN1TexelCoord = vec2( 
 			probeN1.x * probeSizeN1.x + mod(rayIndexN1, probeSizeN1.x), 
-			probeN1.y * probeSizeN1.y + floor(float(rayIndexN1) / (probeSizeN1.y))
+			probeN1.y * probeSizeN1.y + float(rayIndexN1) / (probeSizeN1.y)
 		);
 
 		vec2 texCoord = rayN1TexelCoord  * texelSizeN1;
@@ -127,9 +122,6 @@ vec4 mergeWithProbe(float rayIndex, vec4 rayRadiance, vec2 probeToMerge)
 		mergedRadiance +=  vec4(rayRadianceN1.rgb , rayRadiance.a);
 		
 	}
-
-
-
 
 	// based on the current probe's position bilinearly interpolate between the 4 nearest probes
 	// get the average of 4 rays in the direction of the current ray in each probe in n + 1 and use the weights to add
@@ -148,7 +140,7 @@ void main()
 	// use the ray index to calculate the ray angle and direction.
 	 
 	float rayAngle = 2.0 * PI * rayIndex / (probeIntervals.x * probeIntervals.y);
-	vec2 rayDir =  vec2(cos(rayAngle), sin(rayAngle));
+	vec2 rayDir =  vec2(cos(rayAngle), -sin(rayAngle));
 
 	// each fragment represents a ray. For each ray/fragment, raymarch through the screen texture in the direction calculated above. Get the
 	// radiance when we hit something.
@@ -165,10 +157,10 @@ void main()
 	vec2 probeCoord = vec2(floor(gl_FragCoord.x / probeIntervals.x), floor(gl_FragCoord.y / probeIntervals.y));
 	vec2 probeCenter = (probeCoord + 0.5) * probeIntervals;
 
-	vec2 rayStart = probeCenter + intervalOrigin * rayDir;
+	vec2 rayStart = probeCenter + (intervalOrigin - intervalLengthBase * 0.5) * rayDir;
 	vec2 rayEnd = rayStart + intervalLength * rayDir;
 
-	vec4 rayRadiance = raymarchDistanceField(rayStart, normalize(rayDir), intervalLength);
+	//vec4 rayRadiance = raymarchDistanceField(rayStart, normalize(rayDir), intervalLength);
 
 	// after we raymarch, merge this ray with the rays of cascade N + 1 using bilinear interpolation. Then in the end the radiance field is going to be 
 	// encoded into cascade 0, and we sample that for the lighting.	
@@ -202,7 +194,7 @@ void main()
 		vec2 end = probeN1Center + intervalLength * rayDir;
 
 		radiances[k] = raymarchDistanceField(rayStart, normalize(end - rayStart), intervalLength);
-
+		
 		//radiances[k] = raymarch(rayStart, rayDir, intervalLength, 1);
 
 		radiances[k] = mergeWithProbe(rayIndex, radiances[k], probeN1);
@@ -220,7 +212,7 @@ vec4 raymarchDistanceField(vec2 start, vec2 dir, float intervalLength)
 	
 	vec2 texelSize = (1.0 / textureSize(distanceField, 0));
 	
-	vec2 ray = start * texelSizeN1;
+	vec2 ray = start * texelSize;
 	
 	vec4 radiance = vec4(0.0);
 
@@ -238,7 +230,7 @@ vec4 raymarchDistanceField(vec2 start, vec2 dir, float intervalLength)
 				return vec4(0.0);	
 		}
 
-		ray += dir * dfSample.r * texelSizeN1;
+		ray += dir * dfSample.r * texelSize;
 		distTravelled += dfSample.r;
 
 		if (distTravelled >= intervalLength || floor(ray) != vec2(0.0)) 

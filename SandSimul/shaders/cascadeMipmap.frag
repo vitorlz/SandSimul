@@ -17,8 +17,6 @@ vec4 calculateRadiance()
 
 	vec2 currentProbe =  gl_FragCoord.xy;
 
-	vec2 numOfProbes = probeIntervalsCascade0 / screenSize;
-
 	vec4 probeRadiance = vec4(0.0);
 	vec4 totalRadiance = vec4(0.0);
 
@@ -30,15 +28,10 @@ vec4 calculateRadiance()
 
 		vec2 rayTexelCoord = vec2( 
 			currentProbe.x * probeIntervalsCascade0.x + mod(rayIndex, probeIntervalsCascade0.x), 
-			currentProbe.y * probeIntervalsCascade0.y + floor(float(rayIndex) / probeIntervalsCascade0.x) 
+			currentProbe.y * probeIntervalsCascade0.y + float(rayIndex) / probeIntervalsCascade0.y
 		);
 		
 		vec4 rayRadiance = texture(cascade0, rayTexelCoord * texelSizeCascade0);
-	
-		if (any(isnan(rayRadiance.rgb)) || any(isinf(rayRadiance.rgb))) 
-		{
-			continue;  
-		}
 		
 		probeRadiance += vec4(rayRadiance.rgb, 1.0);
 	}

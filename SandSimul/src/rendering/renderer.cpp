@@ -232,12 +232,15 @@ void Renderer::update()
     bool useJfaTex0 = true;
     bool firstIteration = true;
 
+    Shader& jfaShader = shaderManager->getShader("jfaShader");
+    jfaShader.use();
+
     // ping pong buffers
     for (int i = maxJfaJump; i >= 1; i /= 2)
     {
         unsigned int drawBuffer = useJfaTex0 ? GL_COLOR_ATTACHMENT0 : GL_COLOR_ATTACHMENT1;
         glDrawBuffer(drawBuffer);
-        
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
@@ -250,12 +253,6 @@ void Renderer::update()
         {
             glBindTexture(GL_TEXTURE_2D, useJfaTex0 ? jfaTex[1] : jfaTex[0]);
         }
-            
-
-        // USE JFA SHADER
-
-        Shader& jfaShader = shaderManager->getShader("jfaShader");
-        jfaShader.use();
 
         jfaShader.setInt("tex", 0);
         jfaShader.setInt("jumpSize", i);
@@ -263,7 +260,7 @@ void Renderer::update()
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        useJfaTex0 = !useJfaTex0;
+        useJfaTex0 = !useJfaTex0; 
     }
 
     // ----------------------------------------------- RC PASS ---------------------------------------------------------

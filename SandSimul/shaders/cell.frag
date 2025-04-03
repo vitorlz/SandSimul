@@ -13,9 +13,9 @@ void main()
 
 	// first texture for jfa
 
+	vec2 seed = (texSample.a > 0.2) ? TexCoords : vec2(-2.0, -2.0);
 	float dist = (texSample.a > 0.2) ? 0.0 : 9999.0;
-
-	DistanceField = vec4(dist, 0.0, 0.0, texSample.a);
+	DistanceField = vec4(dist, seed, texSample.a);
 
 	FragColor = texSample; 
 }
