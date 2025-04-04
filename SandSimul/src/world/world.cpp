@@ -609,9 +609,9 @@ void World::createStone(int x, int y)
 		.isUpdated = false
 	};
 
-	float f = types::genRandom(200, 255) / 255.0f;
+	//float f = types::genRandom(200, 255) / 255.0f;
 
-	stone.color = stone.color * f;
+	//stone.color = stone.color * f;
 	grid.set(x, y, stone);
 }
 

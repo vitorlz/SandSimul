@@ -20,13 +20,13 @@ vec4 jfa()
 		for(int y= -1; y <= 1; y++)
 		{
 			vec2 offset = jumpSize * vec2(x, y);
-			
 			vec2 neighborCoords = TexCoords + offset * texelSize;
 
-			if (neighborCoords != clamp(neighborCoords, 0.0, 1.0)) continue;
+			if (neighborCoords.x < 0.0 || neighborCoords.x > 1.0 ||
+				neighborCoords.y < 0.0 || neighborCoords.y > 1.0)
+				continue;
 			
 			vec4 neighbor = texture(tex, neighborCoords);
-
 			vec2 candidateSeed = neighbor.gb;
 
 			vec2 currentPixel = TexCoords * vec2(texSize);
@@ -42,7 +42,6 @@ vec4 jfa()
 	}
 
 	return vec4(dist, bestNeighborCoords, texSample.a);
-
 }
 
 void main()
