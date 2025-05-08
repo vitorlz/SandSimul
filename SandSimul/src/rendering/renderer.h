@@ -43,4 +43,17 @@ private:
 	ShaderManager* shaderManager;
 
 	Grid* grid;
+
+	void jfaPass();
+	void unlitScenePass();
+	void cascadeMipmapPass();
+	void rcPass();
+	void postPass();
+
+	void createScreenQuad();
+	void createGridTex();
+	void createUnlitSceneBuffers();
+	void createCascadesTex();
+	void createCascadeMipmap();
+	void createJFABuffers();
 };

@@ -31,7 +31,6 @@ vec4 calculateRadiance()
 	}
 
 	totalRadiance += probeRadiance / probeSize;
-
 	return totalRadiance;
 }
 
@@ -39,6 +38,5 @@ vec4 calculateRadiance()
 void main()
 {
 	vec4 radiance = calculateRadiance();
-
 	FragColor = vec4(radiance.rgb, 1.0);
 }

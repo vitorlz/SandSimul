@@ -43,12 +43,14 @@ private:
 
 	void createCell(int x, int y, CellType type);
 	void spawnCells();
+	void updateGrid();
 
 	// returns last air cell found in the direction specified.
 	types::Pos disperse(int x, int y, int dispersion, int dirX, int dirY, bool stopAtNonEmpty = true);
 
 	int brushSize = 5;
 
+	void updateBrush();
 	void brushDraw(int centerX, int centerY);
 
 	struct Brush

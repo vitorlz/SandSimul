@@ -12,7 +12,7 @@ uniform int numOfCascades;
 uniform vec2 probeIntervals;
 //uniform vec2 screenSize;
 
-float intervalLengthBase = 4;
+float intervalLengthBase = 6;
 
 const vec2 texelSizeN1 = 1.0 / textureSize(cascadeN1, 0);
 
@@ -117,7 +117,6 @@ void main()
 }
 
 
-
 vec4 raymarchDistanceField(vec2 start, vec2 dir, float intervalLength)
 {
 	vec2 texelSize = (1.0 / textureSize(distanceField, 0));
@@ -146,7 +145,7 @@ vec4 raymarchDistanceField(vec2 start, vec2 dir, float intervalLength)
 		if (distTravelled >= intervalLength)
 			break;
 
-		if(ray.x < 0.0 || ray.x > 1.0 || ray.y < 0.0 || ray.y > 1.0)
+		if(ray.x< 0.0 || ray.x > 1.0 || ray.y < 0.0 || ray.y > 1.0)
 			 return vec4(0.0);
 	}
 
@@ -159,7 +158,7 @@ vec4 raymarch(vec2 start, vec2 dir, float intervalLength, int stepSize)
 	float dist = intervalLength;
 	vec2 uv = start;
 	float steps = int(ceil(dist/stepSize));
-	vec2 marchStep = (dir );
+	vec2 marchStep = (dir);
 
 	for(int i = 0; i <= steps; i++)
 	{

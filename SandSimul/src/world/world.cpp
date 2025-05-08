@@ -2,7 +2,6 @@
 #include "iostream"
 #include "random"
 #include <GLFW/glfw3.h>
-#include "glm/glm.hpp"
 #include "algorithm"
 
 void World::init(Input* input, int screenWidth, int screenHeight)
@@ -14,45 +13,9 @@ void World::init(Input* input, int screenWidth, int screenHeight)
 
 void World::updateCells()
 {
-	if (input->keyPressed[GLFW_KEY_1])
-	{
-		brush = { SAND, SOLID_MOVABLE, 40.0f, 3 , false };
-	}
-	else if (input->keyPressed[GLFW_KEY_2])
-	{
-		brush = { WATER, FLUID, 40.0f, 3 , false };
-	}
-	else if (input->keyPressed[GLFW_KEY_3])
-	{
-		brush = { WOOD, SOLID_IMMOVABLE, 60.0f, 0, true };
-	}
-	else if (input->keyPressed[GLFW_KEY_BACKSPACE])
-	{
-		brush = { AIR, FLUID, 60.0f, 0, true };
-	}
-	else if (input->keyPressed[GLFW_KEY_4])
-	{
-		brush = { FIRE, REACTION, 60.0f, 0, true };
-	}
-	else if (input->keyPressed[GLFW_KEY_5])
-	{
-		brush = { STONE, SOLID_IMMOVABLE, 60.0f, 0, true };
-	}
-	else if (input->keyPressed[GLFW_KEY_6])
-	{
-		brush = { GUNPOWDER, SOLID_MOVABLE, 40.0f, 3, false };
-	}
-	else if (input->keyPressed[GLFW_KEY_7])
-	{
-		brush = { SMOKE, GAS, 40.0f, 3, false };
-	}
-	else if (input->keyPressed[GLFW_KEY_8])
-	{
-		brush = { STEAM, GAS, 40.0f, 3, false };
-	}
+	updateBrush();
 
-
-	if (input->isleftMouseDown)
+	if (input->isLeftMouseDown)
 	{
 		spawnCells();
 		mouseDownLastFrame = true;
@@ -62,60 +25,7 @@ void World::updateCells()
 		mouseDownLastFrame = false;
 	}
 
-	for (int i = grid.size - 1; i >= 0; i--)
-	{
-		for (int j = grid.size - 1; j >= 0; j--)
-		{
-			if (grid.get(i, j).isUpdated)
-				continue;
-
-			switch (grid.get(i, j).type)
-			{
-			case SAND:
-				updateSand(i, j);
-				break;
-			case WATER:
-				updateWater(i, j);
-				break;
-			case WOOD:
-				updateWood(i, j);
-				break;
-			case FIRE:
-				updateFire(i, j);
-				break;
-			case STONE:
-				updateStone(i, j);
-				break;
-			case GUNPOWDER:
-				updateGunpowder(i, j);
-				break;
-			case SMOKE:
-				updateSmoke(i, j);
-				break;
-			case STEAM:
-				updateSteam(i, j);
-				break;
-			}
-
-			grid.get(i, j).isUpdated = true;
-		}
-	}
-
-	for (int i = grid.size - 1; i >= 0; i--)
-	{
-		for (int j = grid.size - 1; j >= 0; j--)
-		{
-			CellData& cell = grid.get(i, j);
-			cell.isUpdated = false;
-			
-			// we can write different simulations here and just also update the texture that is rendered to the screen.
-			// Like, we can have a separate particle simulation that tracks the cells' velocity and gravity. 
-			// take a cell --> put it in particle simulation with velocity and gravity and make it fly into the air --> once it hits something
-			// take it back to the sand simulation.
-			
-			grid.setCellTextureColor(i, j, cell.color);
-		}
-	}
+	updateGrid();
 }
 
 void World::updateSand(int x, int y)
@@ -267,8 +177,63 @@ void World::spawnCells()
 
 		lastBrushType = brush.type;
 	}
+}
 
-	
+void World::updateGrid()
+{
+	for (int i = grid.size - 1; i >= 0; i--)
+	{
+		for (int j = grid.size - 1; j >= 0; j--)
+		{
+			if (grid.get(i, j).isUpdated)
+				continue;
+
+			switch (grid.get(i, j).type)
+			{
+			case SAND:
+				updateSand(i, j);
+				break;
+			case WATER:
+				updateWater(i, j);
+				break;
+			case WOOD:
+				updateWood(i, j);
+				break;
+			case FIRE:
+				updateFire(i, j);
+				break;
+			case STONE:
+				updateStone(i, j);
+				break;
+			case GUNPOWDER:
+				updateGunpowder(i, j);
+				break;
+			case SMOKE:
+				updateSmoke(i, j);
+				break;
+			case STEAM:
+				updateSteam(i, j);
+				break;
+			}
+
+			grid.get(i, j).isUpdated = true;
+		}
+	}
+
+	for (int i = grid.size - 1; i >= 0; i--)
+	{
+		for (int j = grid.size - 1; j >= 0; j--)
+		{
+			CellData& cell = grid.get(i, j);
+			cell.isUpdated = false;
+
+			// we can write different simulations here and just also update the texture that is rendered to the screen.
+			// We can have a separate particle simulation that tracks the cells' velocity and gravity. 
+			// take a cell --> put it in particle simulation with velocity and gravity and make it fly into the air --> once it hits something
+			// take it back to the sand simulation.
+			grid.setCellTextureColor(i, j, cell.color);
+		}
+	}
 }
 
 void World::createSand(int x, int y)
@@ -297,8 +262,6 @@ void World::updateWater(int x, int y)
 		int randomOffset = types::genRandom(-1, 1);
 
 		CellData cellBelow = grid.get(x, y + 1);
-		CellData cellDiagonal = grid.get(x + randomOffset, y + 1);
-		CellData cellSide = grid.get(x + randomOffset, y);
 
 		if (cellBelow.type == AIR || cellBelow.kind == GAS)
 		{
@@ -307,6 +270,9 @@ void World::updateWater(int x, int y)
 		}
 		else if (x + randomOffset < grid.size && x + randomOffset >= 0)
 		{
+			CellData cellDiagonal = grid.get(x + randomOffset, y + 1);
+			CellData cellSide = grid.get(x + randomOffset, y);
+
 			if (cellDiagonal.type == AIR || cellDiagonal.kind == GAS)
 			{
 				// disperse diagonally 
@@ -376,6 +342,46 @@ types::Pos World::disperse(int x, int y, int dispersion, int dirX, int dirY, boo
 			break;
 		}
 		i++;
+	}
+}
+
+void World::updateBrush()
+{
+	if (input->keyPressed[GLFW_KEY_1])
+	{
+		brush = { SAND, SOLID_MOVABLE, 40.0f, 3 , false };
+	}
+	else if (input->keyPressed[GLFW_KEY_2])
+	{
+		brush = { WATER, FLUID, 40.0f, 3 , false };
+	}
+	else if (input->keyPressed[GLFW_KEY_3])
+	{
+		brush = { WOOD, SOLID_IMMOVABLE, 60.0f, 0, true };
+	}
+	else if (input->keyPressed[GLFW_KEY_BACKSPACE])
+	{
+		brush = { AIR, FLUID, 60.0f, 0, true };
+	}
+	else if (input->keyPressed[GLFW_KEY_4])
+	{
+		brush = { FIRE, REACTION, 60.0f, 0, true };
+	}
+	else if (input->keyPressed[GLFW_KEY_5])
+	{
+		brush = { STONE, SOLID_IMMOVABLE, 60.0f, 0, true };
+	}
+	else if (input->keyPressed[GLFW_KEY_6])
+	{
+		brush = { GUNPOWDER, SOLID_MOVABLE, 40.0f, 3, false };
+	}
+	else if (input->keyPressed[GLFW_KEY_7])
+	{
+		brush = { SMOKE, GAS, 40.0f, 3, false };
+	}
+	else if (input->keyPressed[GLFW_KEY_8])
+	{
+		brush = { STEAM, GAS, 40.0f, 3, false };
 	}
 }
 

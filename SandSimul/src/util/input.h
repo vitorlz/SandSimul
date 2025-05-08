@@ -9,12 +9,12 @@ public:
 		, int screenHeight);
 	void update();
 
-	bool isrightMouseDown = false;
-	bool isrightMousePressed = false;
-	bool isleftMouseDown = false;
-	bool isleftMousePressed = false;
-	bool ismiddleMouseDown = false;
-	bool ismiddleMousePressed = false;
+	bool isRightMouseDown = false;
+	bool isRightMousePressed = false;
+	bool isLeftMouseDown = false;
+	bool isLeftMousePressed = false;
+	bool isMiddleMouseDown = false;
+	bool isMiddleMousePressed = false;
 
 	int mouseX;
 	int mouseY;

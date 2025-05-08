@@ -21,7 +21,6 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 	try
 	{
-		
 		vShaderFile.open(vertexPath);
 		fShaderFile.open(fragmentPath);
 		std::stringstream vShaderStream, fShaderStream;

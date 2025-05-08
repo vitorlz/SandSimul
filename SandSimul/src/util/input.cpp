@@ -58,30 +58,30 @@ void Input::update()
 		mouseY = 0;
 	}
 
-	isleftMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-	isrightMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-	ismiddleMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+	isLeftMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+	isRightMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+	isMiddleMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
 
 	static bool leftMouseDownLastFrame = false;
 	static bool rightMouseDownLastFrame = false;
 	static bool middleMouseDownLastFrame = false;
 
-	if (isleftMouseDown && !leftMouseDownLastFrame)
-		isleftMousePressed = true;
+	if (isLeftMouseDown && !leftMouseDownLastFrame)
+		isLeftMousePressed = true;
 	else
-		isleftMousePressed = false;
+		isLeftMousePressed = false;
 
-	if (isrightMouseDown && !rightMouseDownLastFrame)
-		isrightMousePressed = true;
+	if (isRightMouseDown && !rightMouseDownLastFrame)
+		isRightMousePressed = true;
 	else
-		isrightMousePressed = false;
+		isRightMousePressed = false;
 
-	if (ismiddleMouseDown && !middleMouseDownLastFrame)
-		ismiddleMousePressed = true;
+	if (isMiddleMouseDown && !middleMouseDownLastFrame)
+		isMiddleMousePressed = true;
 	else
-		ismiddleMousePressed = false;
+		isMiddleMousePressed = false;
 
-	leftMouseDownLastFrame = isleftMouseDown;
-	rightMouseDownLastFrame = isrightMouseDown;
-	middleMouseDownLastFrame = ismiddleMouseDown;
+	leftMouseDownLastFrame = isLeftMouseDown;
+	rightMouseDownLastFrame = isRightMouseDown;
+	middleMouseDownLastFrame = isMiddleMouseDown;
 }

@@ -1,6 +1,7 @@
 #include "application.h"
 #include <GLFW/glfw3.h>
 
+
 #include <iostream>
 
 Application::Application()
@@ -14,9 +15,7 @@ Application::Application()
 void Application::run()
 {
     double lastTime = 0;
-    double limit = 1 / 60;
-
-    glfwSwapInterval(0);
+    double limit = 1 / 165.0;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -30,16 +29,13 @@ void Application::run()
             if (input.keyPressed[GLFW_KEY_K])
                 shaderManager.reloadShaders();
             
-
             input.update();
             world.updateCells();
-
             renderer.update();
+            glfwSwapBuffers(window);
+
             lastTime = currentTime;
         }
-
-        glfwSwapBuffers(window);
-        
     }
 
     cleanup();
@@ -51,6 +47,7 @@ void Application::initWindow()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, false);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -64,6 +61,7 @@ void Application::initWindow()
         abort();
     }
     glfwMakeContextCurrent(window);
+    glfwSetWindowUserPointer(window, this);
 }
 
 void Application::cleanup()
