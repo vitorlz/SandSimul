@@ -30,6 +30,9 @@ private:
 	void updateStone(int x, int y);
 	void createStone(int x, int y);
 
+	void updateLight(int x, int y);
+	void createLight(int x, int y);
+
 	void updateGunpowder(int x, int y);
 	void createGunpowder(int x, int y);
 

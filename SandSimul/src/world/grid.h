@@ -13,7 +13,8 @@ enum CellType : uint8_t
 	STONE,
 	GUNPOWDER,
 	SMOKE,
-	STEAM
+	STEAM,
+	LIGHT
 };
 
 enum CellKind : uint8_t

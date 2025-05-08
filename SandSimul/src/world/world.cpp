@@ -88,6 +88,9 @@ void World::createCell(int x, int y, CellType type)
 	case STEAM:
 		createSteam(x, y);
 		break;
+	case LIGHT:
+		createLight(x, y);
+		break;
 	}
 }
 
@@ -349,40 +352,44 @@ void World::updateBrush()
 {
 	if (input->keyPressed[GLFW_KEY_1])
 	{
-		brush = { SAND, SOLID_MOVABLE, 40.0f, 3 , false };
+		brush = { LIGHT, SOLID_IMMOVABLE, 60.0f, 0, true };
 	}
 	else if (input->keyPressed[GLFW_KEY_2])
 	{
-		brush = { WATER, FLUID, 40.0f, 3 , false };
+		brush = { WOOD, SOLID_IMMOVABLE, 60.0f, 0, true };
 	}
 	else if (input->keyPressed[GLFW_KEY_3])
 	{
-		brush = { WOOD, SOLID_IMMOVABLE, 60.0f, 0, true };
-	}
-	else if (input->keyPressed[GLFW_KEY_BACKSPACE])
-	{
-		brush = { AIR, FLUID, 60.0f, 0, true };
+		brush = { WATER, FLUID, 40.0f, 3 , false };
 	}
 	else if (input->keyPressed[GLFW_KEY_4])
 	{
-		brush = { FIRE, REACTION, 60.0f, 0, true };
+		brush = { SAND, SOLID_MOVABLE, 40.0f, 3 , false };
 	}
 	else if (input->keyPressed[GLFW_KEY_5])
 	{
-		brush = { STONE, SOLID_IMMOVABLE, 60.0f, 0, true };
+		brush = { FIRE, REACTION, 60.0f, 0, true };
 	}
 	else if (input->keyPressed[GLFW_KEY_6])
 	{
-		brush = { GUNPOWDER, SOLID_MOVABLE, 40.0f, 3, false };
+		brush = { STONE, SOLID_IMMOVABLE, 60.0f, 0, true };
 	}
 	else if (input->keyPressed[GLFW_KEY_7])
 	{
-		brush = { SMOKE, GAS, 40.0f, 3, false };
+		brush = { GUNPOWDER, SOLID_MOVABLE, 40.0f, 3, false };
 	}
 	else if (input->keyPressed[GLFW_KEY_8])
 	{
-		brush = { STEAM, GAS, 40.0f, 3, false };
+		brush = { SMOKE, GAS, 40.0f, 3, false };
 	}
+	else if (input->keyPressed[GLFW_KEY_9])
+	{
+		brush = { STEAM, GAS, 40.0f, 3, false };
+	}	
+	else if (input->keyPressed[GLFW_KEY_BACKSPACE])
+	{
+		brush = { AIR, FLUID, 60.0f, 0, true };
+	}	
 }
 
 void World::brushDraw(int centerX, int centerY)
@@ -442,7 +449,7 @@ void World::createWood(int x, int y)
 	{
 		.type = WOOD,
 		.kind = SOLID_IMMOVABLE,
-		.color = types::color8{ 79, 42, 21, 100 },
+		.color = types::color8{ 79, 42, 21, 20 },
 		.flammability = 130,
 		.combustsInto = SMOKE,
 		.isUpdated = false
@@ -610,15 +617,29 @@ void World::createStone(int x, int y)
 	{
 		.type = STONE,
 		.kind = SOLID_IMMOVABLE,
+		.color = types::color8{ 100, 100, 100, 20},
+		.flammability = 0,
+		.isUpdated = false
+	};
+
+	float f = types::genRandom(160, 255) / 255.0f;
+
+	stone.color = stone.color * f;
+	grid.set(x, y, stone);
+}
+
+void World::createLight(int x, int y)
+{
+	CellData light =
+	{
+		.type = LIGHT,
+		.kind = SOLID_IMMOVABLE,
 		.color = types::color8{ 255, 255, 255 },
 		.flammability = 0,
 		.isUpdated = false
 	};
 
-	//float f = types::genRandom(200, 255) / 255.0f;
-
-	//stone.color = stone.color * f;
-	grid.set(x, y, stone);
+	grid.set(x, y, light);
 }
 
 void World::updateGunpowder(int x, int y)
@@ -632,7 +653,7 @@ void World::createGunpowder(int x, int y)
 	{
 		.type = GUNPOWDER,
 		.kind = SOLID_MOVABLE,
-		.color = types::color8{ 70, 70, 70 },
+		.color = types::color8{ 70, 70, 70, 20 },
 		.flammability = 254,
 		.combustsInto = SMOKE,
 		.isUpdated = false
@@ -647,8 +668,6 @@ void World::createGunpowder(int x, int y)
 void World::updateSmoke(int x, int y)
 {
 	CellData currentCell = grid.get(x, y);
-	float f = types::genRandom(100, 255) / 255.0f;
-	grid.get(x, y).color = types::color8{ 70, 70, 70 } * f;
 	
 	if (y > 0)
 	{
@@ -705,7 +724,7 @@ void World::createSmoke(int x, int y)
 	{
 		.type = SMOKE,
 		.kind = GAS,
-		.color = types::color8{ 70, 70, 70 },
+		.color = types::color8{ 50, 50, 50, 0 },
 		.flammability = 0,
 		.isUpdated = false
 	};
@@ -719,8 +738,6 @@ void World::createSmoke(int x, int y)
 void World::updateSteam(int x, int y)
 {
 	CellData currentCell = grid.get(x, y);
-	float f = types::genRandom(100, 255) / 255.0f;
-	grid.get(x, y).color = types::color8{ 120, 120, 120 } *f;
 
 	if (y > 0)
 	{
@@ -777,7 +794,7 @@ void World::createSteam(int x, int y)
 	{
 		.type = STEAM,
 		.kind = GAS,
-		.color = types::color8{ 120, 120, 120 },
+		.color = types::color8{ 120, 120, 120, 0 },
 		.flammability = 0,
 		.isUpdated = false
 	};

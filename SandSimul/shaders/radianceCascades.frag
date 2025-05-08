@@ -130,11 +130,10 @@ vec4 raymarchDistanceField(vec2 start, vec2 dir, float intervalLength)
 		
 		if(dfSample.r == 0.0)
 		{
-			if(dfSample.a == 1.0)
+			if(dfSample.a > 0.1)
 			{
-				return vec4(texture(unlitScene,  ray).rgb, 0.0);	
-			}
-				
+				return vec4(texture(unlitScene, ray).rgb, 0.0);	
+			}	
 			else
 				return vec4(0.0);	
 		}
